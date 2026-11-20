@@ -1,0 +1,46 @@
+# Web framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+
+# Database
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# Auth / JWT
+PyJWT==2.10.0
+cryptography==43.0.3
+
+# HTTP client (provider adapters, JWKS fetch)
+httpx==0.28.0
+tenacity==9.0.0
+
+# Validation / settings
+pydantic==2.10.2
+pydantic-settings==2.6.1
+
+# Logging
+structlog==24.4.0
+
+# Rate limiting
+slowapi==0.1.9
+
+# Redis (cache + rate limiter)
+redis==5.2.0
+
+# Qdrant
+qdrant-client==1.12.1
+fastembed==0.4.1
+
+# Background tasks (Phase 6+: celery)
+celery==5.4.0
+
+# Utilities
+python-multipart==0.0.12
+python-ulid==3.0.0
+
+# Document parsing
+pypdf==5.1.0
+
+# Error monitoring (no-op unless SENTRY_DSN is set)
+sentry-sdk==2.19.2
