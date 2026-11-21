@@ -8,56 +8,64 @@ export async function SiteHeader() {
     const { data } = await supabase.auth.getUser();
     user = data.user;
   } catch {
-    // If Supabase is unconfigured or offline in dev
+    // Supabase unconfigured or offline in dev
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-stone-50/90 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full bg-canvas/90 backdrop-blur border-b border-hairline">
       <div className="max-w-6xl mx-auto flex h-14 items-center justify-between px-6">
+        {/* Wordmark + Nav */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="font-semibold text-lg text-stone-900 tracking-tight flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block" />
+          <Link
+            href="/"
+            className="font-semibold text-base text-stone tracking-tight flex items-center gap-2"
+            style={{ fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}
+          >
+            {/* Small accent dot — stone colored */}
+            <span className="w-2 h-2 rounded-full bg-primary inline-block" />
             PaperTrail
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm text-stone-600">
-            <Link href="/search" className="hover:text-stone-900 transition-colors">
+
+          <nav className="hidden md:flex items-center gap-6 text-sm text-stone">
+            <Link href="/search" className="hover:text-ink transition-colors">
               Search
             </Link>
-            <Link href="/graph" className="hover:text-stone-900 transition-colors">
+            <Link href="/graph" className="hover:text-ink transition-colors">
               Citation Graph
             </Link>
-            <Link href="/recommendations" className="hover:text-stone-900 transition-colors">
+            <Link href="/recommendations" className="hover:text-ink transition-colors">
               Recommendations
             </Link>
-            <Link href="/reviews" className="hover:text-stone-900 transition-colors">
+            <Link href="/reviews" className="hover:text-ink transition-colors">
               Reviews
             </Link>
-            <Link href="/evaluation" className="hover:text-stone-900 transition-colors">
+            <Link href="/evaluation" className="hover:text-ink transition-colors">
               Eval Lab
             </Link>
           </nav>
         </div>
 
+        {/* Auth Controls */}
         <div className="flex items-center gap-3">
           {user ? (
             <Link
               href="/workspace"
-              className="text-xs font-medium px-3 py-1.5 rounded-md bg-stone-900 text-white hover:bg-stone-800 transition-colors flex items-center gap-2"
+              className="btn-secondary text-xs px-4 py-1.5"
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
               Workspace
             </Link>
           ) : (
-            <div className="flex items-center gap-2 text-xs font-medium">
+            <div className="flex items-center gap-2">
               <Link
-                href="/auth/login"
-                className="px-3 py-1.5 rounded-md text-stone-600 hover:text-stone-900 transition-colors"
+                href="/login"
+                className="text-xs font-medium text-stone hover:text-ink px-3 py-1.5 transition-colors"
               >
                 Sign in
               </Link>
               <Link
-                href="/auth/register"
-                className="px-3 py-1.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                href="/register"
+                className="btn-primary text-xs px-4 py-1.5"
               >
                 Register
               </Link>

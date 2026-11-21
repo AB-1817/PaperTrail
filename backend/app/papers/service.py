@@ -10,9 +10,37 @@ from app.papers import repository
 from app.papers.schemas import AuthorResponse, PaperListResponse, PaperResponse
 
 
-async def get_paper(db: AsyncSession, paper_id: uuid.UUID) -> PaperResponse:
-    data = await repository.get_paper_by_id(db, paper_id)
+async def get_paper(db: AsyncSession, paper_id: str) -> PaperResponse:
+    data = None
+    try:
+        pid = uuid.UUID(paper_id)
+        data = await repository.get_paper_by_id(db, pid)
+    except Exception:
+        pass
+
     if not data:
+        # Check SEED_PAPERS
+        from app.search.seed_corpus import SEED_PAPERS
+        for sp in SEED_PAPERS:
+            if sp.id == paper_id or sp.doi == paper_id:
+                return PaperResponse(
+                    id=sp.id,
+                    doi=sp.doi,
+                    title=sp.title,
+                    abstract=sp.abstract,
+                    year=sp.year,
+                    venue=sp.venue,
+                    volume=None,
+                    issue=None,
+                    open_access=sp.open_access,
+                    oa_url=f"https://doi.org/{sp.doi}" if sp.doi else None,
+                    has_abstract=bool(sp.abstract),
+                    has_references=False,
+                    authors=[AuthorResponse(name=a, position=idx + 1) for idx, a in enumerate(sp.authors)],
+                    topics=sp.topics,
+                    source_providers=["openalex"],
+                )
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Paper with ID '{paper_id}' not found",
@@ -67,5 +95,9 @@ async def list_papers(db: AsyncSession, page: int, per_page: int) -> PaperListRe
     )
 
 
-async def get_references(db: AsyncSession, paper_id: uuid.UUID) -> list[dict[str, Any]]:
-    return await repository.get_paper_references(db, paper_id)
+async def get_references(db: AsyncSession, paper_id: str) -> list[dict[str, Any]]:
+    try:
+        pid = uuid.UUID(paper_id)
+        return await repository.get_paper_references(db, pid)
+    except Exception:
+        return []

@@ -24,6 +24,8 @@ node_modules/
 out/
 frontend/.next/
 frontend/node_modules/
+*.tsbuildinfo
+frontend/*.tsbuildinfo
 
 # Supabase local state
 supabase/.branches/

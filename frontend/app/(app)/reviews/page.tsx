@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { createClient } from "@/lib/supabase/client";
+import { API_BASE_URL } from "@/lib/api/client";
 
 interface Review {
   id: string;
@@ -29,7 +30,7 @@ export default function ReviewsPage() {
       const token = data.session?.access_token;
       if (!token) return;
 
-      const res = await fetch("http://localhost:8000/api/v1/reviews", {
+      const res = await fetch(`${API_BASE_URL}/api/v1/reviews`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const json = await res.json();
@@ -41,9 +42,7 @@ export default function ReviewsPage() {
     }
   }
 
-  useEffect(() => {
-    loadReviews();
-  }, []);
+  useEffect(() => { loadReviews(); }, []);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -52,12 +51,9 @@ export default function ReviewsPage() {
     const token = data.session?.access_token;
     if (!token) return;
 
-    await fetch("http://localhost:8000/api/v1/reviews", {
+    await fetch(`${API_BASE_URL}/api/v1/reviews`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ title, description }),
     });
 
@@ -68,43 +64,47 @@ export default function ReviewsPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col bg-canvas">
       <SiteHeader />
-      <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-10">
-        <div className="flex items-center justify-between border-b border-stone-200 pb-5 mb-8">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-12">
+        {/* Header */}
+        <div className="flex items-start justify-between border-b border-hairline pb-6 mb-10">
           <div>
-            <h1 className="text-2xl font-bold text-stone-900 tracking-tight">Literature Review Studio</h1>
-            <p className="text-sm text-stone-500 mt-1">
+            <p className="eyebrow text-ash mb-2">Synthesis</p>
+            <h1
+              className="text-4xl font-light text-ink"
+              style={{ fontFamily: "var(--font-fraunces), Fraunces, Georgia, serif" }}
+            >
+              Literature Review Studio
+            </h1>
+            <p className="text-sm text-ash mt-2">
               Synthesize cross-paper findings, methodologies, and comparisons with claim-level evidence citations.
             </p>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-          >
+          <button onClick={() => setShowModal(true)} className="btn-primary text-xs mt-1">
             + New Project
           </button>
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-xs text-stone-400">Loading reviews...</div>
+          <div className="text-center py-24 text-xs text-ash">Loading reviews...</div>
         ) : reviews.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {reviews.map((rev) => (
               <Link
                 key={rev.id}
                 href={`/reviews/${rev.id}`}
-                className="bg-white p-6 rounded-xl border border-stone-200 hover:border-indigo-200 hover:shadow-sm transition-all flex flex-col justify-between"
+                className="card-hover flex flex-col justify-between"
               >
                 <div>
-                  <h3 className="text-base font-semibold text-stone-900">{rev.title}</h3>
+                  <h3 className="text-base font-medium text-ink">{rev.title}</h3>
                   {rev.description && (
-                    <p className="text-xs text-stone-500 mt-1 line-clamp-2">{rev.description}</p>
+                    <p className="text-xs text-ash mt-1 line-clamp-2">{rev.description}</p>
                   )}
                 </div>
-                <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-400">
+                <div className="mt-5 pt-4 border-t border-hairline flex items-center justify-between text-xs text-ash">
                   <span>{rev.paper_count} papers</span>
-                  <span className="uppercase text-[10px] tracking-wide font-semibold text-stone-600 bg-stone-100 px-2 py-0.5 rounded">
+                  <span className="eyebrow text-[9px] px-2.5 py-1 rounded-full border border-hairline bg-canvas text-stone">
                     {rev.status}
                   </span>
                 </div>
@@ -112,58 +112,58 @@ export default function ReviewsPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white p-12 text-center rounded-xl border border-stone-200">
-            <h3 className="text-sm font-semibold text-stone-900">No review projects yet</h3>
-            <p className="text-xs text-stone-500 mt-1 mb-4">
+          <div className="card shadow-elevated text-center py-16">
+            <h3 className="text-sm font-medium text-ink mb-1">No review projects yet</h3>
+            <p className="text-xs text-ash mt-1 mb-6">
               Create a project to synthesize research across multiple papers.
             </p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
-            >
+            <button onClick={() => setShowModal(true)} className="btn-primary">
               Create Your First Review
             </button>
           </div>
         )}
 
+        {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-stone-900/30 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl border border-stone-200">
-              <h2 className="text-lg font-bold text-stone-900 mb-4">New Literature Review</h2>
-              <form onSubmit={handleCreate} className="space-y-4">
+          <div className="fixed inset-0 bg-ink-band/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="card shadow-elevated max-w-md w-full">
+              <h2
+                className="text-2xl font-light text-ink mb-6"
+                style={{ fontFamily: "var(--font-fraunces), Fraunces, Georgia, serif" }}
+              >
+                New Literature Review
+              </h2>
+              <form onSubmit={handleCreate} className="space-y-5">
                 <div>
-                  <label className="block text-xs font-medium text-stone-700 mb-1">Project Title</label>
+                  <label className="block text-xs font-medium text-stone mb-1.5">Project Title</label>
                   <input
                     type="text"
                     required
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Hallucination Mitigation in RAG"
-                    className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-600"
+                    className="input-field"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-stone-700 mb-1">Description</label>
+                  <label className="block text-xs font-medium text-stone mb-1.5">Description</label>
                   <textarea
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Brief description of the research scope"
-                    className="w-full px-3 py-2 text-sm border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-600"
+                    className="input-field resize-none"
                   />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-3 py-2 text-xs font-medium text-stone-600 hover:text-stone-900"
+                    className="btn-outline text-xs px-4 py-2"
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700"
-                  >
+                  <button type="submit" className="btn-primary text-xs px-5 py-2">
                     Create Project
                   </button>
                 </div>

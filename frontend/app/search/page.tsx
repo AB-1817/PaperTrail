@@ -27,81 +27,86 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col bg-canvas">
       <SiteHeader />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10">
         <div className="mb-8">
           <SearchBar initialQuery={q} />
         </div>
 
         {q && (
-          <div className="flex items-center justify-between border-b border-stone-200 pb-3 mb-6 text-xs text-stone-500">
+          <div className="flex items-center justify-between border-b border-hairline pb-3 mb-6 text-xs text-ash">
             <div>
-              Found <span className="font-semibold text-stone-900">{total}</span> results for &ldquo;{q}&rdquo;
+              Found <span className="font-semibold text-ink">{total}</span> results for &ldquo;{q}&rdquo;
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-stone-400">Strategy:</span>
-              <span className="font-mono bg-stone-100 px-2 py-0.5 rounded text-stone-700">{strategy}</span>
+              <span className="text-mute">Strategy:</span>
+              <span className="font-mono bg-canvas px-2 py-0.5 rounded-sm border border-hairline text-stone">{strategy}</span>
             </div>
           </div>
         )}
 
         {errorMsg && (
-          <div className="p-4 mb-6 text-xs bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          <div className="p-4 mb-6 text-xs bg-surface border border-error/30 text-error rounded-lg">
             {errorMsg}
           </div>
         )}
 
         {papers.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {papers.map((paper) => (
               <div
                 key={paper.id}
-                className="bg-white p-5 rounded-xl border border-stone-200 hover:border-indigo-200 hover:shadow-sm transition-all"
+                className="card-hover"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <Link
                       href={`/papers/${paper.id}`}
-                      className="text-base font-semibold text-stone-900 hover:text-indigo-600 transition-colors"
+                      className="text-base font-medium text-ink hover:text-primary transition-colors"
                     >
                       {paper.title}
                     </Link>
-                    <div className="text-xs text-stone-500 mt-1 flex flex-wrap items-center gap-2">
+                    <div className="text-xs text-ash mt-1 flex flex-wrap items-center gap-2">
                       <span>{paper.authors?.map((a) => a.name).join(", ") || "Unknown authors"}</span>
-                      {paper.year && <span>&bull; {paper.year}</span>}
-                      {paper.venue && <span>&bull; {paper.venue}</span>}
+                      {paper.year && <span>· {paper.year}</span>}
+                      {paper.venue && <span>· {paper.venue}</span>}
                     </div>
                   </div>
                   {paper.open_access && (
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold tracking-wide uppercase whitespace-nowrap">
+                    <span className="eyebrow text-[9px] px-2.5 py-1 rounded-full border border-sage-pale bg-canvas text-olive whitespace-nowrap">
                       Open Access
                     </span>
                   )}
                 </div>
 
                 {paper.abstract && (
-                  <p className="text-xs text-stone-600 mt-3 line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-ash mt-3 line-clamp-3 leading-relaxed">
                     {paper.abstract}
                   </p>
                 )}
 
                 {paper.explanation?.matched_terms && paper.explanation.matched_terms.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-stone-100 flex items-center gap-2 text-[11px] text-stone-400">
-                    <span className="font-medium text-stone-500">Matched:</span>
-                    <span className="text-stone-600">{paper.explanation.matched_terms.join(", ")}</span>
+                  <div className="mt-3 pt-3 border-t border-hairline flex items-center gap-2 text-[11px] text-ash">
+                    <span className="font-medium text-stone">Matched:</span>
+                    <span>{paper.explanation.matched_terms.join(", ")}</span>
                   </div>
                 )}
               </div>
             ))}
           </div>
         ) : q ? (
-          <div className="text-center py-16 bg-white border border-stone-200 rounded-xl">
-            <p className="text-sm text-stone-500">No papers found matching your query.</p>
-            <p className="text-xs text-stone-400 mt-1">Try broader terms or verify the spelling.</p>
+          <div className="text-center py-20 bg-surface border border-hairline rounded-lg">
+            <p className="text-sm text-stone">No papers found matching your query.</p>
+            <p className="text-xs text-ash mt-1">Try broader terms or verify the spelling.</p>
           </div>
-        ) : null}
+        ) : (
+          <div className="text-center py-20 bg-surface border border-hairline rounded-lg">
+            <p className="text-sm text-stone">Type a keyword, title, author, or concept above to begin searching.</p>
+            <p className="text-xs text-ash mt-1">BM25 keyword search and dense semantic embeddings will rank results.</p>
+          </div>
+        )}
       </main>
 
       <SiteFooter />

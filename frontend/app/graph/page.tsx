@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { API_BASE_URL } from "@/lib/api/client";
 
 interface GraphNode {
   id: string;
@@ -31,8 +32,7 @@ export default function GraphPage() {
   useEffect(() => {
     if (!seed) return;
     setLoading(true);
-
-    fetch(`http://localhost:8000/api/v1/graph/seed/${seed}`)
+    fetch(`${API_BASE_URL}/api/v1/graph/seed/${encodeURIComponent(seed)}`)
       .then((res) => res.json())
       .then((json) => {
         if (json.data) {
@@ -46,72 +46,81 @@ export default function GraphPage() {
   }, [seed]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col bg-canvas">
       <SiteHeader />
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-8 flex flex-col">
-        <div className="border-b border-stone-200 pb-4 mb-6">
-          <h1 className="text-2xl font-bold text-stone-900 tracking-tight">Citation &amp; Relationship Graph</h1>
-          <p className="text-xs text-stone-500 mt-1">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-12 flex flex-col">
+        {/* Header */}
+        <div className="border-b border-hairline pb-6 mb-8">
+          <p className="eyebrow text-ash mb-2">Network Explorer</p>
+          <h1
+            className="text-4xl font-light text-ink"
+            style={{ fontFamily: "var(--font-fraunces), Fraunces, Georgia, serif" }}
+          >
+            Citation &amp; Relationship Graph
+          </h1>
+          <p className="text-xs text-ash mt-2">
             Explore authentic citation networks and thematic connections between indexed papers.
           </p>
         </div>
 
-        {/* Graph Display Area */}
-        <div className="flex-1 bg-white border border-stone-200 rounded-xl p-6 min-h-[500px] flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Graph Canvas */}
+        <div className="flex-1 card shadow-elevated min-h-[520px] flex flex-col overflow-hidden">
           {loading ? (
-            <div className="text-xs text-stone-400">Loading citation graph...</div>
+            <div className="flex-1 flex items-center justify-center text-xs text-ash">
+              Loading citation graph...
+            </div>
           ) : nodes.length > 0 ? (
-            <div className="w-full h-full flex flex-col justify-between">
-              <div className="text-xs text-stone-400 mb-4">
-                Showing <span className="font-semibold text-stone-700">{nodes.length}</span> connected papers and{" "}
-                <span className="font-semibold text-stone-700">{edges.length}</span> verified citation edges.
+            <div className="flex flex-col h-full">
+              <div className="text-xs text-ash mb-5">
+                Showing <span className="font-semibold text-ink">{nodes.length}</span> connected papers
+                and <span className="font-semibold text-ink">{edges.length}</span> verified citation edges.
               </div>
 
-              {/* Node List View / Visual Representation */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {/* Node Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 flex-1">
                 {nodes.map((node) => (
                   <div
                     key={node.id}
                     onClick={() => setSelectedNode(node)}
-                    className={`p-4 rounded-lg border text-xs cursor-pointer transition-all ${
+                    className={`card text-xs cursor-pointer transition-all ${
                       selectedNode?.id === node.id
-                        ? "border-indigo-600 bg-indigo-50/50 shadow-sm"
-                        : "border-stone-200 hover:border-stone-300"
+                        ? "border-primary shadow-card"
+                        : "hover:border-[#c4bdb2]"
                     }`}
                   >
-                    <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="flex items-center gap-2 mb-1.5">
                       <span
-                        className={`w-2 h-2 rounded-full ${
-                          node.is_seed ? "bg-indigo-600" : node.open_access ? "bg-emerald-500" : "bg-stone-400"
+                        className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          node.is_seed ? "bg-primary" : node.open_access ? "bg-olive" : "bg-ash"
                         }`}
                       />
-                      <span className="font-semibold text-stone-800 line-clamp-1">{node.title}</span>
+                      <span className="font-medium text-ink line-clamp-1">{node.title}</span>
                     </div>
-                    <span className="text-[11px] text-stone-400">{node.year || "Unknown Year"}</span>
+                    <span className="text-[11px] text-ash">{node.year || "Unknown Year"}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Selected Node Drawer */}
+              {/* Selected Node Detail */}
               {selectedNode && (
-                <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between">
+                <div className="mt-6 pt-5 border-t border-hairline flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-stone-900">{selectedNode.title}</h3>
-                    <p className="text-xs text-stone-400">ID: {selectedNode.id}</p>
+                    <h3 className="text-sm font-medium text-ink">{selectedNode.title}</h3>
+                    <p className="text-xs text-ash mt-0.5">ID: {selectedNode.id}</p>
                   </div>
                   <a
                     href={`/papers/${selectedNode.id}`}
-                    className="px-3 py-1.5 rounded-lg bg-stone-900 text-white text-xs font-medium hover:bg-stone-800 transition-colors"
+                    className="btn-secondary text-xs px-4 py-2"
                   >
-                    Open Paper Detail &rarr;
+                    Open Paper →
                   </a>
                 </div>
               )}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-sm text-stone-500">No active paper seed selected for graph exploration.</p>
-              <p className="text-xs text-stone-400 mt-1">
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-16">
+              <p className="text-sm text-stone">No active paper seed selected for graph exploration.</p>
+              <p className="text-xs text-ash mt-2 max-w-xs leading-relaxed">
                 Search for any paper and click &ldquo;Explore Citation Graph&rdquo; to visualize its citation neighborhood.
               </p>
             </div>

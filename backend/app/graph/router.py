@@ -13,18 +13,18 @@ from app.graph import edge_resolver
 router = APIRouter(prefix="/graph", tags=["graph"])
 
 
-@router.get("/seed/{paper_id}")
+@router.get("/seed/{paper_id:path}")
 async def get_seed_graph(
-    paper_id: uuid.UUID,
+    paper_id: str,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     graph_data = await edge_resolver.get_seed_graph(paper_id, db)
     return {"data": graph_data, "meta": None, "error": None}
 
 
-@router.get("/expand/{paper_id}")
+@router.get("/expand/{paper_id:path}")
 async def expand_graph_node(
-    paper_id: uuid.UUID,
+    paper_id: str,
     existing_ids: str = Query(default=""),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:

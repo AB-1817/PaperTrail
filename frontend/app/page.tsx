@@ -46,18 +46,22 @@ const CAPABILITIES = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-canvas">
       <SiteHeader />
 
-      {/* Hero */}
       <main className="flex-1">
-        <section className="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
-          <h1 className="text-4xl sm:text-5xl font-semibold text-stone-900 leading-tight mb-4">
+        {/* ── Hero ── */}
+        <section className="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
+          <p className="eyebrow text-stone mb-6">Research Intelligence</p>
+          <h1
+            className="text-5xl sm:text-6xl font-light text-ink leading-[1.08] mb-6"
+            style={{ fontFamily: "var(--font-fraunces), Fraunces, Georgia, serif" }}
+          >
             Research intelligence,
             <br />
-            <span className="text-indigo-600">grounded in evidence.</span>
+            <span className="italic">grounded in evidence.</span>
           </h1>
-          <p className="text-lg text-stone-500 max-w-2xl mx-auto mb-10">
+          <p className="text-base text-ash max-w-2xl mx-auto mb-12 leading-relaxed">
             Discover academic research, understand citation relationships,
             organize your literature and synthesize findings — with every claim
             traceable to its source.
@@ -65,17 +69,15 @@ export default function HomePage() {
 
           <SearchBar />
 
-          {/* Example queries */}
-          <div className="mt-6">
-            <p className="text-xs text-stone-400 mb-3 uppercase tracking-wide">
-              Try an example
-            </p>
+          {/* Example queries as outline pills */}
+          <div className="mt-8">
+            <p className="eyebrow text-ash mb-4">Try an example</p>
             <div className="flex flex-wrap justify-center gap-2">
               {EXAMPLE_QUERIES.map((q) => (
                 <Link
                   key={q}
                   href={`/search?q=${encodeURIComponent(q)}`}
-                  className="text-xs px-3 py-1.5 rounded-full border border-stone-200 text-stone-600 hover:border-indigo-300 hover:text-indigo-700 hover:bg-indigo-50 transition-colors"
+                  className="text-xs px-4 py-2 rounded-full border border-hairline text-stone bg-canvas hover:border-stone hover:bg-surface transition-colors"
                 >
                   {q}
                 </Link>
@@ -84,22 +86,26 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Capabilities */}
-        <section className="border-t border-stone-200 bg-white">
-          <div className="max-w-5xl mx-auto px-6 py-16">
-            <h2 className="text-xl font-semibold text-stone-900 mb-10 text-center">
+        {/* ── Capabilities — white card band ── */}
+        <section className="bg-surface border-t border-hairline">
+          <div className="max-w-5xl mx-auto px-6 py-20">
+            <p className="eyebrow text-ash text-center mb-3">Platform</p>
+            <h2
+              className="text-3xl font-light text-ink text-center mb-14"
+              style={{ fontFamily: "var(--font-fraunces), Fraunces, Georgia, serif" }}
+            >
               Built for serious research workflows
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {CAPABILITIES.map((cap) => (
                 <div
                   key={cap.title}
-                  className="p-5 rounded-lg border border-stone-200 hover:border-indigo-200 hover:shadow-sm transition-all"
+                  className="card-hover"
                 >
-                  <h3 className="text-sm font-semibold text-stone-900 mb-2">
+                  <h3 className="text-sm font-semibold text-ink mb-2">
                     {cap.title}
                   </h3>
-                  <p className="text-sm text-stone-500 leading-relaxed">
+                  <p className="text-sm text-ash leading-relaxed">
                     {cap.description}
                   </p>
                 </div>
@@ -108,17 +114,13 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Data sources */}
-        <section className="max-w-4xl mx-auto px-6 py-12 text-center">
-          <p className="text-xs text-stone-400 uppercase tracking-wide mb-4">
-            Real data from
-          </p>
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-stone-500">
+        {/* ── Data sources band ── */}
+        <section className="max-w-4xl mx-auto px-6 py-16 text-center">
+          <p className="eyebrow text-ash mb-5">Real data from</p>
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-stone font-medium">
             {["OpenAlex", "Semantic Scholar", "arXiv", "Crossref", "Unpaywall"].map(
               (src) => (
-                <span key={src} className="font-medium">
-                  {src}
-                </span>
+                <span key={src}>{src}</span>
               )
             )}
           </div>

@@ -52,56 +52,95 @@ async def search_papers_post(
         doi=parsed_query.fields.get("doi"),
     )
 
-    # Fetch pool of papers from PostgreSQL
-    rows = await db.execute(
-        text(
-            """
-            SELECT p.id, p.title, p.abstract, p.year, p.venue, p.open_access, p.doi
-            FROM papers p
-            ORDER BY p.created_at DESC
-            LIMIT 500
-            """
-        )
-    )
-    paper_rows = list(rows.mappings())
-
-    # Build PaperDoc items
     paper_docs: list[PaperDoc] = []
-    for r in paper_rows:
-        pid = str(r["id"])
-        # Fetch authors and topics
-        author_rows = await db.execute(
+
+    # 1. Attempt to fetch pool of papers from PostgreSQL if online
+    try:
+        rows = await db.execute(
             text(
                 """
-                SELECT a.name
-                FROM paper_authors pa
-                JOIN authors a ON a.id = pa.author_id
-                WHERE pa.paper_id = :pid
+                SELECT p.id, p.title, p.abstract, p.year, p.venue, p.open_access, p.doi
+                FROM papers p
+                ORDER BY p.created_at DESC
+                LIMIT 500
                 """
-            ),
-            {"pid": pid},
-        )
-        authors = [a["name"] for a in author_rows.mappings()]
-
-        topic_rows = await db.execute(
-            text("SELECT topic FROM paper_topics WHERE paper_id = :pid"),
-            {"pid": pid},
-        )
-        topics = [t["topic"] for t in topic_rows.mappings()]
-
-        paper_docs.append(
-            PaperDoc(
-                id=pid,
-                title=r["title"],
-                abstract=r["abstract"],
-                year=r["year"],
-                venue=r["venue"],
-                open_access=r["open_access"],
-                doi=r["doi"],
-                authors=authors,
-                topics=topics,
             )
         )
+        paper_rows = list(rows.mappings())
+
+        for r in paper_rows:
+            pid = str(r["id"])
+            author_rows = await db.execute(
+                text(
+                    """
+                    SELECT a.name
+                    FROM paper_authors pa
+                    JOIN authors a ON a.id = pa.author_id
+                    WHERE pa.paper_id = :pid
+                    """
+                ),
+                {"pid": pid},
+            )
+            authors = [a["name"] for a in author_rows.mappings()]
+
+            topic_rows = await db.execute(
+                text("SELECT topic FROM paper_topics WHERE paper_id = :pid"),
+                {"pid": pid},
+            )
+            topics = [t["topic"] for t in topic_rows.mappings()]
+
+            paper_docs.append(
+                PaperDoc(
+                    id=pid,
+                    title=r["title"],
+                    abstract=r["abstract"],
+                    year=r["year"],
+                    venue=r["venue"],
+                    open_access=r["open_access"],
+                    doi=r["doi"],
+                    authors=authors,
+                    topics=topics,
+                )
+            )
+    except Exception as db_exc:
+        # PostgreSQL is offline or uninitialized — fallback to live scholarly providers
+        pass
+
+    # 2. If no papers in DB or DB offline, try live providers with seed corpus fallback
+    if not paper_docs:
+        from app.search.seed_corpus import SEED_PAPERS
+        from app.providers.openalex import OpenAlexAdapter
+        from app.providers.arxiv import ArXivAdapter
+
+        try:
+            openalex = OpenAlexAdapter()
+            live_papers = await openalex.search(body.q, limit=25)
+            if not live_papers:
+                arxiv = ArXivAdapter()
+                live_papers = await arxiv.search(body.q, limit=25)
+
+            import hashlib
+            for p in live_papers:
+                doc_id = p.doi or hashlib.sha256(p.title.encode("utf-8")).hexdigest()[:16]
+                paper_docs.append(
+                    PaperDoc(
+                        id=doc_id,
+                        title=p.title,
+                        abstract=p.abstract or "",
+                        year=p.year,
+                        venue=p.venue,
+                        open_access=p.open_access,
+                        doi=p.doi,
+                        authors=[a.name for a in p.authors],
+                        topics=p.topics,
+                    )
+                )
+        except Exception:
+            pass
+
+        # If live search returned nothing (e.g. offline / DNS failure), use curated seed papers
+        if not paper_docs:
+            paper_docs = list(SEED_PAPERS)
 
     # Execute full ranking pipeline with exact requested strategy
     ranked = rank_papers(

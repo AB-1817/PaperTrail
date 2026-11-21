@@ -13,9 +13,9 @@ from app.papers.schemas import PaperListResponse, PaperResponse
 router = APIRouter(prefix="/papers", tags=["papers"])
 
 
-@router.get("/{paper_id}", response_model=PaperResponse)
+@router.get("/{paper_id:path}", response_model=PaperResponse)
 async def get_paper(
-    paper_id: uuid.UUID,
+    paper_id: str,
     db: AsyncSession = Depends(get_db),
 ) -> PaperResponse:
     """Fetch complete metadata for a single research paper."""
@@ -32,9 +32,9 @@ async def list_papers(
     return await service.list_papers(db, page, per_page)
 
 
-@router.get("/{paper_id}/references")
+@router.get("/{paper_id:path}/references")
 async def get_paper_references(
-    paper_id: uuid.UUID,
+    paper_id: str,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     """Citation references made by this paper."""

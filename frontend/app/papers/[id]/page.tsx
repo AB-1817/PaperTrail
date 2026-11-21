@@ -16,12 +16,15 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
 
   if (!paper) {
     return (
-      <div className="min-h-screen flex flex-col bg-stone-50">
+      <div className="min-h-screen flex flex-col bg-canvas">
         <SiteHeader />
-        <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-16 text-center">
-          <h1 className="text-2xl font-bold text-stone-900">Paper Not Found</h1>
-          <p className="text-sm text-stone-500 mt-2">The requested paper ID does not exist in our library.</p>
-          <Link href="/search" className="mt-6 inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold">
+        <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-24 text-center">
+          <h1 className="text-4xl font-light text-ink mb-4"
+            style={{ fontFamily: "var(--font-fraunces), Fraunces, Georgia, serif" }}>
+            Paper Not Found
+          </h1>
+          <p className="text-sm text-ash mb-8">The requested paper ID does not exist in our library.</p>
+          <Link href="/search" className="btn-primary">
             Back to Search
           </Link>
         </main>
@@ -31,43 +34,53 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col bg-canvas">
       <SiteHeader />
       <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-10">
         {/* Back Link */}
-        <Link href="/search" className="text-xs text-stone-500 hover:text-stone-900 transition-colors inline-block mb-6">
-          &larr; Back to Search
+        <Link href="/search" className="text-xs text-ash hover:text-stone transition-colors inline-block mb-8">
+          ← Back to Search
         </Link>
 
         {/* Paper Header */}
-        <div className="bg-white p-8 rounded-xl border border-stone-200 mb-8 shadow-sm">
+        <div className="card shadow-elevated mb-6">
           <div className="flex items-start justify-between gap-4">
-            <h1 className="text-2xl font-bold text-stone-900 leading-snug">{paper.title}</h1>
+            <h1
+              className="text-3xl font-light text-ink leading-snug"
+              style={{ fontFamily: "var(--font-fraunces), Fraunces, Georgia, serif" }}
+            >
+              {paper.title}
+            </h1>
             {paper.open_access && (
-              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold tracking-wide uppercase whitespace-nowrap">
+              <span className="eyebrow text-[9px] px-2.5 py-1 rounded-full border border-sage-pale bg-canvas text-olive whitespace-nowrap">
                 Open Access
               </span>
             )}
           </div>
 
-          <div className="mt-3 text-sm text-stone-600 flex flex-wrap items-center gap-2">
+          <div className="mt-3 text-sm text-ash flex flex-wrap items-center gap-2">
             <span>{paper.authors?.map((a) => a.name).join(", ") || "Unknown authors"}</span>
-            {paper.year && <span>&bull; {paper.year}</span>}
-            {paper.venue && <span>&bull; {paper.venue}</span>}
+            {paper.year && <span>· {paper.year}</span>}
+            {paper.venue && <span>· {paper.venue}</span>}
           </div>
 
           {paper.doi && (
-            <div className="mt-2 text-xs font-mono text-stone-400">
-              DOI: <a href={`https://doi.org/${paper.doi}`} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">{paper.doi}</a>
+            <div className="mt-2 text-xs font-mono text-mute">
+              DOI:{" "}
+              <a
+                href={`https://doi.org/${paper.doi}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
+                {paper.doi}
+              </a>
             </div>
           )}
 
           {/* Action Row */}
-          <div className="mt-6 pt-6 border-t border-stone-100 flex flex-wrap items-center gap-3">
-            <Link
-              href={`/graph?seed=${paper.id}`}
-              className="px-3.5 py-1.5 rounded-lg border border-stone-300 text-stone-700 text-xs font-medium hover:border-indigo-400 hover:text-indigo-600 transition-all"
-            >
+          <div className="mt-6 pt-5 border-t border-hairline flex flex-wrap items-center gap-3">
+            <Link href={`/graph?seed=${paper.id}`} className="btn-outline text-xs px-4 py-2">
               Explore Citation Graph
             </Link>
             {paper.oa_url && (
@@ -75,7 +88,7 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
                 href={paper.oa_url}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700 transition-colors"
+                className="btn-primary text-xs px-4 py-2"
               >
                 View PDF
               </a>
@@ -84,29 +97,27 @@ export default async function PaperDetailPage({ params }: PaperDetailPageProps) 
         </div>
 
         {/* Abstract */}
-        <div className="bg-white p-8 rounded-xl border border-stone-200 mb-8">
-          <h2 className="text-sm uppercase font-semibold text-stone-400 tracking-wider mb-3">Abstract</h2>
-          <p className="text-sm text-stone-700 leading-relaxed">
+        <div className="card mb-6">
+          <p className="eyebrow text-ash mb-4">Abstract</p>
+          <p className="text-sm text-stone leading-relaxed">
             {paper.abstract || "Abstract not provided for this document."}
           </p>
         </div>
 
         {/* References */}
-        <div className="bg-white p-8 rounded-xl border border-stone-200">
-          <h2 className="text-sm uppercase font-semibold text-stone-400 tracking-wider mb-4">
-            References ({references.length})
-          </h2>
+        <div className="card">
+          <p className="eyebrow text-ash mb-4">References ({references.length})</p>
           {references.length > 0 ? (
-            <div className="divide-y divide-stone-100">
+            <div className="divide-y divide-hairline">
               {references.map((ref) => (
                 <div key={ref.id} className="py-3 text-xs">
-                  <p className="font-medium text-stone-900">{ref.cited_title || ref.doi_fallback || "Unresolved Reference"}</p>
-                  {ref.cited_year && <span className="text-stone-400">{ref.cited_year}</span>}
+                  <p className="font-medium text-ink">{ref.cited_title || ref.doi_fallback || "Unresolved Reference"}</p>
+                  {ref.cited_year && <span className="text-ash">{ref.cited_year}</span>}
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-xs text-stone-400">No references indexed yet for this paper.</p>
+            <p className="text-xs text-mute italic">No references indexed yet for this paper.</p>
           )}
         </div>
       </main>

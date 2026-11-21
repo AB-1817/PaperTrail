@@ -37,13 +37,19 @@ export async function middleware(request: NextRequest) {
   );
 
   // Refresh session — must not use getUser() result for auth decisions
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    user = authUser;
+  } catch {
+    // If Supabase is offline or unconfigured
+  }
 
   if (!user && isProtected(request.nextUrl.pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
+    url.pathname = "/login";
     url.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
