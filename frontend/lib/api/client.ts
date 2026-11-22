@@ -79,7 +79,11 @@ export async function searchPapers(
 }
 
 export async function getPaper(id: string): Promise<ApiResponse<Paper>> {
-  return request<Paper>(`/api/v1/papers/${encodeURIComponent(id)}`);
+  const res: any = await request<any>(`/api/v1/papers/${encodeURIComponent(id)}`);
+  if (res && res.id && !res.data) {
+    return { data: res as Paper, meta: null, error: null };
+  }
+  return res;
 }
 
 export async function getPaperReferences(id: string): Promise<ApiResponse<any[]>> {

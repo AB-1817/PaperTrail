@@ -10,10 +10,10 @@ interface PaperDetailPageProps {
 export default async function PaperDetailPage({ params }: PaperDetailPageProps) {
   const { id } = await params;
   const paperId = decodeURIComponent(id.join("/"));
-  const res = await getPaper(paperId);
-  const paper = res.data;
+  const res: any = await getPaper(paperId);
+  const paper = res?.data || (res?.id ? res : null);
   const refRes = await getPaperReferences(paperId);
-  const references = refRes.data || [];
+  const references = refRes?.data || [];
 
   if (!paper) {
     return (
