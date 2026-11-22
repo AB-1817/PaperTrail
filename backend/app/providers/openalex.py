@@ -57,6 +57,24 @@ class OpenAlexAdapter:
                 logger.warning("openalex_work_parse_error", work_id=item.get("id"), error=str(exc))
         return results
 
+    async def get_by_doi(self, doi: str) -> NormalizedPaper | None:
+        """Fetch one exact work by DOI instead of using text-search results."""
+        normalized = normalize_doi(doi)
+        if not normalized:
+            return None
+        settings = get_settings()
+        url = f"https://api.openalex.org/works/https://doi.org/{normalized}"
+        params: dict[str, str] = {}
+        if settings.openalex_email:
+            params["mailto"] = settings.openalex_email
+        try:
+            raw_text = await self.http.get_text(url, params=params)
+            item = json.loads(raw_text)
+            return self._parse_work(item)
+        except Exception as exc:
+            logger.warning("openalex_doi_lookup_failed", doi=normalized, error=str(exc))
+            return None
+
     def _parse_work(self, item: dict) -> NormalizedPaper:
         doi = normalize_doi(item.get("doi"))
         title = strip_markup(item.get("title") or "Untitled")

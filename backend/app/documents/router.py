@@ -63,7 +63,9 @@ async def get_document_status(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     row = await db.execute(
-        text("SELECT id, parse_status, parser_used, page_count, parsed_at FROM documents WHERE id = :id"),
+        text(
+            "SELECT id, parse_status, parser_used, page_count, parsed_at FROM documents WHERE id = :id"
+        ),
         {"id": str(document_id)},
     )
     item = row.mappings().first()

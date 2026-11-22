@@ -6,6 +6,7 @@ from typing import Protocol
 import httpx
 
 from app.core.config import get_settings
+from app.core.errors import AppError
 
 
 @dataclass
@@ -38,7 +39,9 @@ class LLMProvider(Protocol):
 class OllamaProvider:
     provider_name = "ollama"
 
-    def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3.1:8b") -> None:
+    def __init__(
+        self, base_url: str = "http://localhost:11434", model: str = "llama3.1:8b"
+    ) -> None:
         self.base_url = base_url
         self.model_id = model
 
@@ -55,10 +58,15 @@ class OllamaProvider:
             "options": {"temperature": temperature, "num_predict": max_tokens},
             "stream": False,
         }
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            resp = await client.post(url, json=payload)
-            resp.raise_for_status()
-            data = resp.json()
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                resp = await client.post(url, json=payload)
+                resp.raise_for_status()
+                data = resp.json()
+        except Exception as exc:
+            raise AppError(
+                status_code=503, code="LLM_NOT_CONFIGURED", message=f"Ollama unreachable: {exc}"
+            ) from exc
 
         return LLMResponse(
             content=data.get("message", {}).get("content", ""),
@@ -66,6 +74,106 @@ class OllamaProvider:
             input_tokens=data.get("prompt_eval_count", 0),
             output_tokens=data.get("eval_count", 0),
             finish_reason="stop",
+        )
+
+
+class OpenAIProvider:
+    provider_name = "openai"
+
+    def __init__(self, api_key: str, model: str = "gpt-4o-mini") -> None:
+        self.api_key = api_key
+        self.model_id = model
+
+    async def complete(
+        self,
+        messages: list[Message],
+        max_tokens: int = 2000,
+        temperature: float = 0.0,
+    ) -> LLMResponse:
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    "https://api.openai.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    json={
+                        "model": self.model_id,
+                        "messages": [{"role": m.role, "content": m.content} for m in messages],
+                        "max_tokens": max_tokens,
+                        "temperature": temperature,
+                    },
+                )
+                response.raise_for_status()
+                data = response.json()
+        except Exception as exc:
+            raise AppError(
+                status_code=503, code="LLM_NOT_CONFIGURED", message=f"OpenAI error: {exc}"
+            ) from exc
+
+        choice = data["choices"][0]
+        usage = data.get("usage") or {}
+        return LLMResponse(
+            content=choice["message"]["content"],
+            model_id=self.model_id,
+            input_tokens=usage.get("prompt_tokens", 0),
+            output_tokens=usage.get("completion_tokens", 0),
+            finish_reason=choice.get("finish_reason", "stop"),
+        )
+
+
+class AnthropicProvider:
+    provider_name = "anthropic"
+
+    def __init__(self, api_key: str, model: str = "claude-3-5-sonnet-latest") -> None:
+        self.api_key = api_key
+        self.model_id = model
+
+    async def complete(
+        self,
+        messages: list[Message],
+        max_tokens: int = 2000,
+        temperature: float = 0.0,
+    ) -> LLMResponse:
+        system = "\n\n".join(m.content for m in messages if m.role == "system")
+        conversation = [
+            {"role": m.role, "content": m.content}
+            for m in messages
+            if m.role in ("user", "assistant")
+        ]
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={
+                        "x-api-key": self.api_key,
+                        "anthropic-version": "2023-06-01",
+                    },
+                    json={
+                        "model": self.model_id,
+                        "system": system,
+                        "messages": conversation,
+                        "max_tokens": max_tokens,
+                        "temperature": temperature,
+                    },
+                )
+                response.raise_for_status()
+                data = response.json()
+        except Exception as exc:
+            raise AppError(
+                status_code=503, code="LLM_NOT_CONFIGURED", message=f"Anthropic error: {exc}"
+            ) from exc
+
+        content = "".join(
+            block.get("text", "")
+            for block in data.get("content", [])
+            if block.get("type") == "text"
+        )
+        usage = data.get("usage") or {}
+        return LLMResponse(
+            content=content,
+            model_id=self.model_id,
+            input_tokens=usage.get("input_tokens", 0),
+            output_tokens=usage.get("output_tokens", 0),
+            finish_reason=data.get("stop_reason", "stop"),
         )
 
 
@@ -79,7 +187,6 @@ class MockProvider:
         max_tokens: int = 2000,
         temperature: float = 0.0,
     ) -> LLMResponse:
-        # Extracts chunk_id from messages context if present
         import re
 
         context = ""
@@ -107,6 +214,30 @@ class MockProvider:
 
 def get_llm_provider() -> LLMProvider:
     settings = get_settings()
-    if settings.llm_provider == "ollama":
+    provider = settings.llm_provider.lower()
+
+    if settings.environment == "test":
+        if provider == "mock":
+            return MockProvider()
+
+    if provider == "ollama":
         return OllamaProvider(base_url=settings.ollama_base_url)
-    return MockProvider()
+    if provider == "openai":
+        if not settings.openai_api_key:
+            raise AppError(
+                status_code=503, code="LLM_NOT_CONFIGURED", message="LLM provider not configured"
+            )
+        return OpenAIProvider(api_key=settings.openai_api_key)
+    if provider == "anthropic":
+        if not settings.anthropic_api_key:
+            raise AppError(
+                status_code=503, code="LLM_NOT_CONFIGURED", message="LLM provider not configured"
+            )
+        return AnthropicProvider(api_key=settings.anthropic_api_key)
+
+    if settings.environment == "test":
+        return MockProvider()
+
+    raise AppError(
+        status_code=503, code="LLM_NOT_CONFIGURED", message="LLM provider not configured"
+    )

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 from sqlalchemy import text
@@ -20,20 +19,14 @@ async def get_seed_graph(paper_id: str, db: AsyncSession) -> dict[str, Any]:
     seed = None
     try:
         seed_row = await db.execute(
-            text("SELECT id, title, year, venue, open_access FROM papers WHERE id = :pid"),
+            text(
+                "SELECT id, title, year, venue, open_access FROM papers WHERE id = :pid OR doi = :pid"
+            ),
             {"pid": pid_str},
         )
         seed = seed_row.mappings().first()
     except Exception:
         pass
-
-    if not seed:
-        # Check seed corpus
-        from app.search.seed_corpus import SEED_PAPERS
-        for sp in SEED_PAPERS:
-            if sp.id == pid_str or sp.doi == pid_str:
-                seed = {"id": sp.id, "title": sp.title, "year": sp.year, "open_access": sp.open_access}
-                break
 
     if not seed:
         return {"nodes": [], "edges": []}
@@ -76,20 +69,6 @@ async def get_seed_graph(paper_id: str, db: AsyncSession) -> dict[str, Any]:
             edges.append({"source": pid_str, "target": tid, "type": "cites"})
     except Exception:
         pass
-
-    # If no DB connections, connect to related seed papers for a rich interactive graph
-    if len(nodes) == 1:
-        from app.search.seed_corpus import SEED_PAPERS
-        for sp in SEED_PAPERS[:6]:
-            if sp.id != pid_str:
-                nodes[sp.id] = {
-                    "id": sp.id,
-                    "title": sp.title,
-                    "year": sp.year,
-                    "open_access": sp.open_access,
-                    "is_seed": False,
-                }
-                edges.append({"source": pid_str, "target": sp.id, "type": "cites"})
 
     return {
         "nodes": list(nodes.values()),

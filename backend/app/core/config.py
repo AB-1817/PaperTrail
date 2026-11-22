@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(".env", "../.env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # ── Environment ──────────────────────────────────────────────────────────
     environment: str = "development"
@@ -40,7 +44,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     anthropic_api_key: str = ""
     ollama_base_url: str = "http://localhost:11434"
-    papertrail_llm_provider: str = "ollama"  # ollama | openai | anthropic
+    llm_provider: str = Field(
+        default="ollama", validation_alias="PAPERTRAIL_LLM_PROVIDER"
+    )  # ollama | openai | anthropic
 
     # ── Embeddings ───────────────────────────────────────────────────────────
     embedding_model: str = "BAAI/bge-base-en-v1.5"

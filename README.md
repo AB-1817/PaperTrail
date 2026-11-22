@@ -368,7 +368,7 @@ Verify services:
 ```bash
 cd backend
 
-# Create and activate virtual environment
+# Create and activate a virtual environment
 python -m venv .venv
 
 # On Linux / macOS:
@@ -377,16 +377,31 @@ source .venv/bin/activate
 .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
 # Run FastAPI backend in development mode
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
+Windows PowerShell can also run the existing virtual environment directly:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+
+Do not use the system `python` command unless Uvicorn is installed for that interpreter.
+Run `python -m pip show uvicorn` to verify the active interpreter, or use the direct
+`backend\.venv\Scripts\python.exe` command shown above.
+
 The backend starts at `http://127.0.0.1:8000`. Test the health probe:
 ```bash
-curl http://127.0.0.1:8000/health
-# {"status":"ok","database":"connected","qdrant":"connected"}
+curl http://127.0.0.1:8000/api/v1/health/live
+# {"status":"ok"}
+
+# Readiness check (database and Qdrant)
+curl http://127.0.0.1:8000/api/v1/health/ready
 ```
 
 ### Frontend Setup

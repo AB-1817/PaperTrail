@@ -10,9 +10,7 @@ from structlog.types import EventDict, WrappedLogger
 from app.core.config import get_settings
 
 
-def add_request_id(
-    logger: WrappedLogger, method_name: str, event_dict: EventDict
-) -> EventDict:
+def add_request_id(logger: WrappedLogger, method_name: str, event_dict: EventDict) -> EventDict:
     """Inject a request_id if one is not already present."""
     event_dict.setdefault("request_id", str(uuid.uuid4()))
     return event_dict

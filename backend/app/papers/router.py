@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -13,15 +12,7 @@ from app.papers.schemas import PaperListResponse, PaperResponse
 router = APIRouter(prefix="/papers", tags=["papers"])
 
 
-@router.get("/{paper_id:path}", response_model=PaperResponse)
-async def get_paper(
-    paper_id: str,
-    db: AsyncSession = Depends(get_db),
-) -> PaperResponse:
-    """Fetch complete metadata for a single research paper."""
-    return await service.get_paper(db, paper_id)
-
-
+# List papers -- must be declared BEFORE any path-param routes
 @router.get("", response_model=PaperListResponse)
 async def list_papers(
     page: int = Query(default=1, ge=1),
@@ -32,11 +23,22 @@ async def list_papers(
     return await service.list_papers(db, page, per_page)
 
 
-@router.get("/{paper_id:path}/references")
+# References sub-route -- must be before the :path catch-all
+@router.get("/{paper_id}/references")
 async def get_paper_references(
     paper_id: str,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    """Citation references made by this paper."""
+    """Citation references made by this paper (UUID or DOI)."""
     refs = await service.get_references(db, paper_id)
     return {"data": refs, "meta": {"total": len(refs)}, "error": None}
+
+
+# Single paper catch-all -- :path so DOIs with slashes work (e.g. 10.1016/j.xxx)
+@router.get("/{paper_id:path}", response_model=PaperResponse)
+async def get_paper(
+    paper_id: str,
+    db: AsyncSession = Depends(get_db),
+) -> PaperResponse:
+    """Fetch complete metadata for a single research paper by UUID or DOI."""
+    return await service.get_paper(db, paper_id)

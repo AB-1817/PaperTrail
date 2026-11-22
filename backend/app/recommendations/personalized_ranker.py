@@ -16,7 +16,9 @@ async def personalized_recommend(
 ) -> list[dict[str, Any]]:
     # 1. Fetch user's saved papers
     saved_rows = await db.execute(
-        text("SELECT paper_id FROM saved_papers WHERE user_id = :uid ORDER BY saved_at DESC LIMIT 10"),
+        text(
+            "SELECT paper_id FROM saved_papers WHERE user_id = :uid ORDER BY saved_at DESC LIMIT 10"
+        ),
         {"uid": str(user_id)},
     )
     saved_ids = [r["paper_id"] for r in saved_rows.mappings()]

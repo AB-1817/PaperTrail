@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
@@ -38,7 +37,9 @@ async def list_graph_topics(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     rows = await db.execute(
-        text("SELECT topic, count(*) as count FROM paper_topics GROUP BY topic ORDER BY count DESC LIMIT 50")
+        text(
+            "SELECT topic, count(*) as count FROM paper_topics GROUP BY topic ORDER BY count DESC LIMIT 50"
+        )
     )
     items = [dict(r) for r in rows.mappings()]
     return {"data": items, "meta": {"total": len(items)}, "error": None}

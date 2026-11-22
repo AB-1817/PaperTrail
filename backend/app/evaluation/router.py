@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -132,7 +132,9 @@ async def get_experiment_results(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
     rows = await db.execute(
-        text("SELECT metric, value, k, computed_at FROM evaluation_results WHERE experiment_id = :id"),
+        text(
+            "SELECT metric, value, k, computed_at FROM evaluation_results WHERE experiment_id = :id"
+        ),
         {"id": str(experiment_id)},
     )
     items = [dict(r) for r in rows.mappings()]

@@ -1,21 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { Fraunces } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-// Fraunces = open-source substitute for Editorial New (high-contrast light serif)
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  weight: ["100", "200", "300", "400"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "PaperTrail — Research Intelligence Platform",
@@ -29,7 +13,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Inter:wght@100..900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="bg-canvas text-ink antialiased">{children}</body>
     </html>
   );

@@ -1,15 +1,34 @@
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+"use client";
 
-export async function SiteHeader() {
-  let user = null;
-  try {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
-  } catch {
-    // Supabase unconfigured or offline in dev
-  }
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+
+export function SiteHeader() {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    try {
+      const supabase = createClient();
+      supabase.auth.getUser().then(({ data }) => {
+        setUser(data.user);
+      }).catch(() => {
+        // Supabase offline or unconfigured in dev
+      });
+
+      const { data: authListener } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          setUser(session?.user ?? null);
+        }
+      );
+
+      return () => {
+        authListener?.subscription?.unsubscribe();
+      };
+    } catch {
+      // Ignored in dev/offline
+    }
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-canvas/90 backdrop-blur border-b border-hairline">
@@ -21,7 +40,6 @@ export async function SiteHeader() {
             className="font-semibold text-base text-stone tracking-tight flex items-center gap-2"
             style={{ fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}
           >
-            {/* Small accent dot — stone colored */}
             <span className="w-2 h-2 rounded-full bg-primary inline-block" />
             PaperTrail
           </Link>

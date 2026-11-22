@@ -63,7 +63,9 @@ async def update_collection(
     return await service.update_collection(db, collection_id, current_user, body)
 
 
-@collections_router.delete("/{collection_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
+@collections_router.delete(
+    "/{collection_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response
+)
 async def delete_collection(
     collection_id: uuid.UUID,
     current_user: UserContext = Depends(get_current_user),
@@ -80,12 +82,7 @@ async def add_paper_to_collection(
     current_user: UserContext = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    from app.workspace import repository
-
-    ok = await repository.add_paper_to_collection(db, collection_id, current_user.user_id, body.paper_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Collection not found")
-    return {"status": "added"}
+    return await service.add_paper_to_collection(db, collection_id, current_user, body.paper_id)
 
 
 @collections_router.delete("/{collection_id}/papers/{paper_id}", status_code=status.HTTP_200_OK)
@@ -95,12 +92,7 @@ async def remove_paper_from_collection(
     current_user: UserContext = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    from app.workspace import repository
-
-    ok = await repository.remove_paper_from_collection(db, collection_id, current_user.user_id, paper_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Paper not found in collection")
-    return {"status": "removed"}
+    return await service.remove_paper_from_collection(db, collection_id, current_user, paper_id)
 
 
 # ── Saved Papers ────────────────────────────────────────────────────────────
@@ -125,7 +117,9 @@ async def save_paper(
     return await service.save_paper(db, current_user, body.paper_id)
 
 
-@router.delete("/saved-papers/{paper_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
+@router.delete(
+    "/saved-papers/{paper_id}", status_code=status.HTTP_204_NO_CONTENT, response_class=Response
+)
 async def unsave_paper(
     paper_id: uuid.UUID,
     current_user: UserContext = Depends(get_current_user),

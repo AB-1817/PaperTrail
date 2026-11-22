@@ -19,7 +19,9 @@ def hash_embed(text: str, dimensions: int = 768) -> list[float]:
     return [value / norm for value in vector]
 
 
-def embed_texts(texts: list[str], *, backend: str = "hash", dimensions: int = 768) -> list[list[float]]:
+def embed_texts(
+    texts: list[str], *, backend: str = "hash", dimensions: int = 768
+) -> list[list[float]]:
     if backend == "fastembed":
         return _fastembed(texts)
     if backend != "hash":

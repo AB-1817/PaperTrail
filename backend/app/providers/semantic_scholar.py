@@ -22,7 +22,9 @@ class SemanticScholarAdapter:
 
     def __init__(self, cache: MemoryCache | None = None) -> None:
         settings = get_settings()
-        limiter_key = "semantic_scholar_keyed" if settings.semantic_scholar_api_key else "semantic_scholar"
+        limiter_key = (
+            "semantic_scholar_keyed" if settings.semantic_scholar_api_key else "semantic_scholar"
+        )
         self.http = ProviderHTTP(
             name=self.name,
             limiter=limiter_for(limiter_key),
@@ -58,6 +60,23 @@ class SemanticScholarAdapter:
             except Exception as exc:
                 logger.warning("semantic_scholar_parse_error", error=str(exc))
         return papers
+
+    async def get_by_id(self, paper_id: str) -> NormalizedPaper | None:
+        settings = get_settings()
+        url = f"https://api.semanticscholar.org/graph/v1/paper/{paper_id}"
+        params = {
+            "fields": "paperId,externalIds,title,abstract,authors,year,venue,openAccessPdf,fieldsOfStudy",
+        }
+        headers = {}
+        if settings.semantic_scholar_api_key:
+            headers["x-api-key"] = settings.semantic_scholar_api_key
+        try:
+            raw_text = await self.http.get_text(url, params=params, headers=headers)
+            item = json.loads(raw_text)
+            return self._parse_item(item)
+        except Exception as exc:
+            logger.warning("semantic_scholar_id_lookup_failed", paper_id=paper_id, error=str(exc))
+            return None
 
     def _parse_item(self, item: dict) -> NormalizedPaper | None:
         title = strip_markup(item.get("title") or "")

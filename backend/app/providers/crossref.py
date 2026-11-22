@@ -58,6 +58,24 @@ class CrossrefAdapter:
                 logger.warning("crossref_item_parse_error", error=str(exc))
         return papers
 
+    async def get_by_doi(self, doi: str) -> NormalizedPaper | None:
+        normalized = normalize_doi(doi)
+        if not normalized:
+            return None
+        settings = get_settings()
+        url = f"https://api.crossref.org/works/{normalized}"
+        params: dict[str, str] = {}
+        if settings.crossref_email:
+            params["mailto"] = settings.crossref_email
+        try:
+            raw_text = await self.http.get_text(url, params=params)
+            data = json.loads(raw_text)
+            item = data.get("message") or {}
+            return self._parse_item(item)
+        except Exception as exc:
+            logger.warning("crossref_doi_lookup_failed", doi=normalized, error=str(exc))
+            return None
+
     def _parse_item(self, item: dict) -> NormalizedPaper | None:
         titles = item.get("title") or []
         if not titles:

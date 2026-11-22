@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 
-def export_to_markdown(review: dict[str, Any], sections: list[dict[str, Any]], matrix: list[dict[str, Any]]) -> str:
+def export_to_markdown(
+    review: dict[str, Any], sections: list[dict[str, Any]], matrix: list[dict[str, Any]]
+) -> str:
     lines = [
         f"# {review.get('title', 'Literature Review')}",
         "",

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from app.evaluation.metrics import (
-    average_precision,
     compute_all_metrics,
     ndcg_at_k,
     precision_at_k,

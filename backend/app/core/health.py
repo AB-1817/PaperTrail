@@ -35,8 +35,9 @@ async def readiness(db: AsyncSession = Depends(get_db)) -> dict[str, object]:
 
     # Qdrant (optional — import only if available)
     try:
-        from app.core.config import get_settings
         import httpx
+
+        from app.core.config import get_settings
 
         settings = get_settings()
         async with httpx.AsyncClient(timeout=3.0) as client:

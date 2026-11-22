@@ -83,9 +83,11 @@ async def rag_query(
         struct_res = await validate_structural(cid_str, top_chunk_ids, db)
 
         # Layer 2: Semantic check
-        sem_res = validate_semantic(claim_text, struct_res.get("passage", ""))
+        sem_res = await validate_semantic(claim_text, struct_res.get("passage", ""))
 
-        is_grounded = bool(struct_res.get("structural_valid")) and bool(sem_res.get("semantic_valid"))
+        is_grounded = bool(struct_res.get("structural_valid")) and bool(
+            sem_res.get("semantic_valid")
+        )
         if is_grounded:
             grounded_count += 1
 

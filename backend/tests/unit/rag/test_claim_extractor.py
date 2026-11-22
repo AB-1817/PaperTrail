@@ -5,7 +5,9 @@ from app.rag.context_builder import scan_for_injection
 
 
 def test_extract_single_citation():
-    text = "The attention mechanism replaces recurrent layers [CITATION:chunk-abc-123]. Next sentence."
+    text = (
+        "The attention mechanism replaces recurrent layers [CITATION:chunk-abc-123]. Next sentence."
+    )
     cites = extract_citations(text)
     assert len(cites) == 1
     assert cites[0]["chunk_id"] == "chunk-abc-123"

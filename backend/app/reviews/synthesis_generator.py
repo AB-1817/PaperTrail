@@ -6,7 +6,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.rag.claim_extractor import extract_citations
+from app.core.errors import AppError
 from app.rag.llm_provider import Message, get_llm_provider
 from app.reviews.projects import get_review_papers
 
@@ -42,11 +42,19 @@ async def generate_section(
     db: AsyncSession,
 ) -> dict[str, Any]:
     if section_type not in SECTION_TYPES:
-        raise ValueError(f"Unknown section type {section_type}")
+        raise AppError(
+            status_code=400,
+            code="INVALID_SECTION_TYPE",
+            message=f"Unknown section type {section_type}",
+        )
 
     papers = await get_review_papers(db, review_id, user_id)
     if not papers:
-        raise ValueError("Cannot synthesize a review without any papers in the project")
+        raise AppError(
+            status_code=422,
+            code="NO_PAPERS",
+            message="Cannot synthesize a review without any papers in the project",
+        )
 
     # Check if full chunks exist
     pids = [str(p["id"]) for p in papers]
@@ -60,10 +68,15 @@ async def generate_section(
 
     if is_abstract_only:
         context_body = "\n\n".join(
-            [f"Paper: {p['title']} ({p.get('year')})\nAbstract: {p.get('abstract') or 'No abstract'}" for p in papers]
+            [
+                f"Paper: {p['title']} ({p.get('year')})\nAbstract: {p.get('abstract') or 'No abstract'}"
+                for p in papers
+            ]
         )
     else:
-        context_body = "\n\n".join([f"[CITATION:{c['id']}]\n{c['text']}\n[/CITATION]" for c in chunks])
+        context_body = "\n\n".join(
+            [f"[CITATION:{c['id']}]\n{c['text']}\n[/CITATION]" for c in chunks]
+        )
 
     prompt = SECTION_PROMPTS.get(section_type, "Synthesize this section.")
     provider = get_llm_provider()

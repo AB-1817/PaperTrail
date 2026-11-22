@@ -14,8 +14,6 @@ from app.workspace.schemas import (
     CollectionUpdate,
     NoteCreate,
     NoteResponse,
-    NoteUpdate,
-    ReadingProgressResponse,
     ReadingProgressUpdate,
     SavedPaperResponse,
 )
@@ -59,23 +57,41 @@ async def update_collection(
     return CollectionResponse(**item)
 
 
-async def delete_collection(
-    db: AsyncSession, collection_id: uuid.UUID, user: UserContext
-) -> None:
+async def delete_collection(db: AsyncSession, collection_id: uuid.UUID, user: UserContext) -> None:
     deleted = await repository.delete_collection(db, collection_id, user.user_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
 
 
-async def save_paper(
-    db: AsyncSession, user: UserContext, paper_id: uuid.UUID
-) -> dict[str, Any]:
+async def add_paper_to_collection(
+    db: AsyncSession, collection_id: uuid.UUID, user: UserContext, paper_id: uuid.UUID
+) -> dict[str, str]:
+    if not await repository.paper_exists(db, paper_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found")
+    ok = await repository.add_paper_to_collection(db, collection_id, user.user_id, paper_id)
+    if not ok:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Collection not found")
+    return {"status": "added"}
+
+
+async def remove_paper_from_collection(
+    db: AsyncSession, collection_id: uuid.UUID, user: UserContext, paper_id: uuid.UUID
+) -> dict[str, str]:
+    ok = await repository.remove_paper_from_collection(db, collection_id, user.user_id, paper_id)
+    if not ok:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found in collection"
+        )
+    return {"status": "removed"}
+
+
+async def save_paper(db: AsyncSession, user: UserContext, paper_id: uuid.UUID) -> dict[str, Any]:
+    if not await repository.paper_exists(db, paper_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found")
     return await repository.save_paper(db, user.user_id, paper_id)
 
 
-async def unsave_paper(
-    db: AsyncSession, user: UserContext, paper_id: uuid.UUID
-) -> None:
+async def unsave_paper(db: AsyncSession, user: UserContext, paper_id: uuid.UUID) -> None:
     deleted = await repository.unsave_paper(db, user.user_id, paper_id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Saved paper not found")
@@ -92,9 +108,9 @@ async def list_saved_papers(
     }
 
 
-async def create_note(
-    db: AsyncSession, user: UserContext, body: NoteCreate
-) -> NoteResponse:
+async def create_note(db: AsyncSession, user: UserContext, body: NoteCreate) -> NoteResponse:
+    if not await repository.paper_exists(db, body.paper_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found")
     item = await repository.create_note(db, user.user_id, body.paper_id, body.content)
     return NoteResponse(**item)
 
@@ -119,4 +135,6 @@ async def delete_note(db: AsyncSession, note_id: uuid.UUID, user: UserContext) -
 async def set_reading_progress(
     db: AsyncSession, user: UserContext, paper_id: uuid.UUID, body: ReadingProgressUpdate
 ) -> dict[str, Any]:
+    if not await repository.paper_exists(db, paper_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Paper not found")
     return await repository.upsert_reading_progress(db, user.user_id, paper_id, body.status)

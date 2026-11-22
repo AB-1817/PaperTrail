@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ipaddress
-import re
 from urllib.parse import urlparse
 
 from app.core.config import get_settings
@@ -66,8 +65,7 @@ def validate_pdf_url(url: str) -> str:
     allowed = settings.pdf_allowed_domains_list
     if not any(hostname == d or hostname.endswith(f".{d}") for d in allowed):
         raise SSRFError(
-            f"Hostname '{hostname}' is not in the PDF fetch allowlist. "
-            f"Allowed: {allowed}"
+            f"Hostname '{hostname}' is not in the PDF fetch allowlist. " f"Allowed: {allowed}"
         )
 
     logger.info("ssrf_guard_passed", url=url, hostname=hostname)

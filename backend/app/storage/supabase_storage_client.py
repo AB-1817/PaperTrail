@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import structlog
 import httpx
+import structlog
 
 from app.core.config import get_settings
 

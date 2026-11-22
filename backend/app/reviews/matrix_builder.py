@@ -27,7 +27,11 @@ async def build_comparison_matrix(
         topics = [r["topic"] for r in t_rows.mappings()]
 
         abstract = p.get("abstract") or ""
-        problem = abstract[:150] + "..." if len(abstract) > 150 else abstract or "Not specified in abstract"
+        problem = (
+            abstract[:150] + "..."
+            if len(abstract) > 150
+            else abstract or "Not specified in abstract"
+        )
 
         matrix.append(
             {

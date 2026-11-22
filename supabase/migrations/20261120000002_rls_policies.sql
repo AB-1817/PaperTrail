@@ -19,7 +19,6 @@ alter table recommendation_events    enable row level security;
 alter table documents                enable row level security;
 alter table document_chunks          enable row level security;
 alter table ingestion_jobs           enable row level security;
-alter table qdrant_indexing_queue    enable row level security;
 
 -- PROFILES
 create policy "profiles_select_own" on profiles

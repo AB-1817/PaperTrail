@@ -27,7 +27,7 @@ export function SiteFooter() {
         </div>
 
         <div className="text-mute">
-          &copy; {new Date().getFullYear()} PaperTrail. Evidence-grounded.
+          &copy; 2026 PaperTrail. Evidence-grounded.
         </div>
       </div>
     </footer>

@@ -68,7 +68,21 @@ async def run_ingestion(
         return
 
     # Load existing papers for in-memory deduplication
-    rows = await db.execute(text("SELECT id, doi, title, year FROM papers LIMIT 5000"))
+    rows = await db.execute(
+        text(
+            """
+            SELECT p.id, p.doi, p.title, p.year,
+                   (SELECT a.family_name
+                    FROM paper_authors pa
+                    JOIN authors a ON a.id = pa.author_id
+                    WHERE pa.paper_id = p.id
+                    ORDER BY pa.position
+                    LIMIT 1) AS first_author_family
+            FROM papers p
+            LIMIT 5000
+            """
+        )
+    )
     existing: list[ExistingPaper] = []
     for r in rows.mappings():
         existing.append(
@@ -77,7 +91,7 @@ async def run_ingestion(
                 doi=r["doi"],
                 title_norm=normalize_title(r["title"]),
                 year=r["year"],
-                first_author_family=None,
+                first_author_family=r["first_author_family"],
             )
         )
 

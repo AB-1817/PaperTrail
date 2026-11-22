@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI, Request, Response
@@ -24,7 +26,8 @@ from app.rag.router import router as rag_router
 from app.recommendations.router import router as recommendations_router
 from app.reviews.router import router as reviews_router
 from app.search.router import router as search_router
-from app.workspace.router import collections_router, router as workspace_router
+from app.workspace.router import collections_router
+from app.workspace.router import router as workspace_router
 
 configure_logging()
 logger = get_logger(__name__)
@@ -34,6 +37,23 @@ settings = get_settings()
 limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    from app.core.sentry import init_sentry
+    from app.outbox.worker import outbox_worker_loop
+
+    init_sentry()
+    worker_task = asyncio.create_task(outbox_worker_loop())
+    try:
+        yield
+    finally:
+        worker_task.cancel()
+        try:
+            await worker_task
+        except asyncio.CancelledError:
+            pass
+
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title="PaperTrail API",
@@ -41,6 +61,7 @@ def create_app() -> FastAPI:
         docs_url="/api/docs" if settings.environment == "development" else None,
         redoc_url="/api/redoc" if settings.environment == "development" else None,
         openapi_url="/api/openapi.json" if settings.environment == "development" else None,
+        lifespan=lifespan,
     )
 
     # ── Rate limiting ──────────────────────────────────────────────────────────

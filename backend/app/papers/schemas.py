@@ -15,7 +15,7 @@ class AuthorResponse(BaseModel):
 
 
 class PaperResponse(BaseModel):
-    id: uuid.UUID
+    id: str
     doi: str | None = None
     title: str
     abstract: str | None = None

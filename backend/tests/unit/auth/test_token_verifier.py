@@ -33,11 +33,11 @@ def _make_token(
 
 @pytest.mark.asyncio
 async def test_valid_token(monkeypatch):
-    import os
     monkeypatch.setenv("SUPABASE_JWT_SECRET", SECRET)
     monkeypatch.setenv("SUPABASE_JWT_ISSUER", ISSUER)
     # Reset cached settings
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
     token = _make_token()
@@ -52,6 +52,7 @@ async def test_expired_token(monkeypatch):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", SECRET)
     monkeypatch.setenv("SUPABASE_JWT_ISSUER", ISSUER)
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
     token = _make_token(exp_offset=-1)
@@ -64,6 +65,7 @@ async def test_wrong_issuer(monkeypatch):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", SECRET)
     monkeypatch.setenv("SUPABASE_JWT_ISSUER", ISSUER)
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
     token = _make_token(iss="https://evil.example.com/auth/v1")
@@ -76,6 +78,7 @@ async def test_wrong_audience(monkeypatch):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", SECRET)
     monkeypatch.setenv("SUPABASE_JWT_ISSUER", ISSUER)
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
     token = _make_token(aud="anon")
@@ -88,10 +91,12 @@ async def test_missing_sub(monkeypatch):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", SECRET)
     monkeypatch.setenv("SUPABASE_JWT_ISSUER", ISSUER)
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
-    import jwt as pyjwt
     import time
+
+    import jwt as pyjwt
 
     # Token with sub key entirely absent
     payload_no_sub = {
@@ -112,6 +117,7 @@ async def test_wrong_secret(monkeypatch):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", SECRET)
     monkeypatch.setenv("SUPABASE_JWT_ISSUER", ISSUER)
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
     token = _make_token(secret="a-completely-different-secret-that-is-long-enough")

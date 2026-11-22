@@ -11,8 +11,11 @@ def _patch_domains(monkeypatch, domains: str = "arxiv.org,export.arxiv.org") -> 
     monkeypatch.setenv("SUPABASE_ANON_KEY", "x")
     monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "x")
     monkeypatch.setenv("SUPABASE_JWT_ISSUER", "http://localhost:54321/auth/v1")
-    monkeypatch.setenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:54322/postgres")
+    monkeypatch.setenv(
+        "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:54322/postgres"
+    )
     from app.core.config import get_settings
+
     get_settings.cache_clear()
 
 

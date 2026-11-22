@@ -29,4 +29,6 @@ def preprocess(raw: str) -> ParsedQuery:
         raise ValueError("Query must be at least 2 characters")
     if not text and fields.get("doi"):
         text = fields["doi"]
-    return ParsedQuery(text=text.lower(), fields=fields, non_ascii=any(ord(ch) > 127 for ch in text))
+    return ParsedQuery(
+        text=text.lower(), fields=fields, non_ascii=any(ord(ch) > 127 for ch in text)
+    )

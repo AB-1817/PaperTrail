@@ -6,6 +6,12 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+
+async def paper_exists(db: AsyncSession, paper_id: uuid.UUID) -> bool:
+    row = await db.execute(text("SELECT 1 FROM papers WHERE id = :pid"), {"pid": str(paper_id)})
+    return row.scalar() is not None
+
+
 # ── Collections ─────────────────────────────────────────────────────────────
 
 
@@ -235,7 +241,9 @@ async def list_notes(
     rows = await db.execute(text(query), params)
     items = [dict(r) for r in rows.mappings()]
     count_row = await db.execute(
-        text(f"SELECT count(*) FROM notes WHERE user_id = :uid {'AND paper_id = :pid' if paper_id else ''}"),
+        text(
+            f"SELECT count(*) FROM notes WHERE user_id = :uid {'AND paper_id = :pid' if paper_id else ''}"
+        ),
         params,
     )
     total = count_row.scalar() or 0

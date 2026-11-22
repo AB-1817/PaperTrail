@@ -30,7 +30,7 @@ class ArXivAdapter:
         )
 
     async def search(self, query: str, limit: int = 20) -> list[NormalizedPaper]:
-        url = "http://export.arxiv.org/api/query"
+        url = "https://export.arxiv.org/api/query"
         clean_q = re.sub(r"[^\w\s]", " ", query).strip()
         params = {
             "search_query": f"all:{clean_q}",
@@ -55,6 +55,27 @@ class ArXivAdapter:
             except Exception as exc:
                 logger.warning("arxiv_entry_parse_error", error=str(exc))
         return papers
+
+    async def get_by_id(self, arxiv_id: str) -> NormalizedPaper | None:
+        clean_id = arxiv_id.strip().lower()
+        if clean_id.startswith("arxiv:"):
+            clean_id = clean_id[len("arxiv:") :]
+        clean_id = clean_id.split("v")[0]
+        url = "https://export.arxiv.org/api/query"
+        params = {
+            "id_list": clean_id,
+            "max_results": "1",
+        }
+        try:
+            raw_xml = await self.http.get_text(url, params=params)
+            root = ET.fromstring(raw_xml)
+            entry = root.find("atom:entry", ATOM_NS)
+            if entry is None:
+                return None
+            return self._parse_entry(entry)
+        except Exception as exc:
+            logger.warning("arxiv_id_lookup_failed", arxiv_id=clean_id, error=str(exc))
+            return None
 
     def _parse_entry(self, entry: ET.Element) -> NormalizedPaper | None:
         raw_id = entry.findtext("atom:id", default="", namespaces=ATOM_NS).strip()

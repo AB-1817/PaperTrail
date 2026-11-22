@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -69,6 +69,11 @@ async def add_paper_to_review(
     current_user: UserContext = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
+    from app.workspace.repository import paper_exists
+
+    if not await paper_exists(db, body.paper_id):
+        raise HTTPException(status_code=404, detail="Paper not found")
+
     ok = await projects.add_paper_to_review(db, review_id, current_user.user_id, body.paper_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Review not found")
@@ -95,7 +100,9 @@ async def generate_review_section(
     current_user: UserContext = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, Any]:
-    res = await synthesis_generator.generate_section(review_id, section_type, current_user.user_id, db)
+    res = await synthesis_generator.generate_section(
+        review_id, section_type, current_user.user_id, db
+    )
     return {"data": res, "meta": None, "error": None}
 
 

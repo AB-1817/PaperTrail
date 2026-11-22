@@ -14,7 +14,7 @@ from app.core.db import get_db
 
 logger = structlog.get_logger(__name__)
 
-_bearer = HTTPBearer(auto_error=True)
+_bearer = HTTPBearer(auto_error=False)
 
 
 @dataclass(frozen=True)
@@ -30,9 +30,15 @@ class UserContext:
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
     db: AsyncSession = Depends(get_db),
 ) -> UserContext:
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication credentials are required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     token = credentials.credentials
     try:
         claims: VerifiedClaims = await verify_token(token)
@@ -60,8 +66,6 @@ async def _ensure_profile(db: AsyncSession, user_id: uuid.UUID) -> None:
     Uses ON CONFLICT DO NOTHING so it is safe to call on every request.
     """
     await db.execute(
-        text(
-            "INSERT INTO profiles (id) VALUES (:uid) ON CONFLICT (id) DO NOTHING"
-        ),
+        text("INSERT INTO profiles (id) VALUES (:uid) ON CONFLICT (id) DO NOTHING"),
         {"uid": str(user_id)},
     )

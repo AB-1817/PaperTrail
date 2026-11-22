@@ -52,7 +52,9 @@ async def get_paper_by_id(db: AsyncSession, paper_id: uuid.UUID) -> dict[str, An
     return res
 
 
-async def list_papers(db: AsyncSession, page: int = 1, per_page: int = 20) -> tuple[list[dict[str, Any]], int]:
+async def list_papers(
+    db: AsyncSession, page: int = 1, per_page: int = 20
+) -> tuple[list[dict[str, Any]], int]:
     offset = (page - 1) * per_page
     rows = await db.execute(
         text("SELECT * FROM papers ORDER BY created_at DESC LIMIT :lim OFFSET :off"),
@@ -82,6 +84,45 @@ async def list_papers(db: AsyncSession, page: int = 1, per_page: int = 20) -> tu
     count_row = await db.execute(text("SELECT count(*) FROM papers"))
     total = count_row.scalar() or 0
     return papers, total
+
+
+async def get_paper_by_doi(db: AsyncSession, doi: str) -> dict[str, Any] | None:
+    paper_row = await db.execute(
+        text("SELECT * FROM papers WHERE doi = :doi"),
+        {"doi": doi},
+    )
+    p = paper_row.mappings().first()
+    if not p:
+        return None
+
+    pid = p["id"]
+
+    author_rows = await db.execute(
+        text(
+            """
+            SELECT a.id, a.name, a.family_name, a.orcid, pa.position
+            FROM paper_authors pa
+            JOIN authors a ON a.id = pa.author_id
+            WHERE pa.paper_id = :pid
+            ORDER BY pa.position
+            """
+        ),
+        {"pid": str(pid)},
+    )
+    topic_rows = await db.execute(
+        text("SELECT topic FROM paper_topics WHERE paper_id = :pid"),
+        {"pid": str(pid)},
+    )
+    source_rows = await db.execute(
+        text("SELECT DISTINCT provider FROM paper_sources WHERE paper_id = :pid"),
+        {"pid": str(pid)},
+    )
+
+    res = dict(p)
+    res["authors"] = [dict(a) for a in author_rows.mappings()]
+    res["topics"] = [r["topic"] for r in topic_rows.mappings()]
+    res["source_providers"] = [r["provider"] for r in source_rows.mappings()]
+    return res
 
 
 async def get_paper_references(db: AsyncSession, paper_id: uuid.UUID) -> list[dict[str, Any]]:

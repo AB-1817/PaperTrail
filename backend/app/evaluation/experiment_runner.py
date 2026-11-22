@@ -108,7 +108,9 @@ async def run_experiment(experiment_id: str, db: AsyncSession) -> dict[str, Any]
     if not query_judgments:
         # No judgments found, mark complete with zero results
         await db.execute(
-            text("UPDATE retrieval_experiments SET status = 'complete', completed_at = now() WHERE id = :id"),
+            text(
+                "UPDATE retrieval_experiments SET status = 'complete', completed_at = now() WHERE id = :id"
+            ),
             {"id": experiment_id},
         )
         await db.commit()
@@ -156,7 +158,9 @@ async def run_experiment(experiment_id: str, db: AsyncSession) -> dict[str, Any]
         )
 
     await db.execute(
-        text("UPDATE retrieval_experiments SET status = 'complete', completed_at = now() WHERE id = :id"),
+        text(
+            "UPDATE retrieval_experiments SET status = 'complete', completed_at = now() WHERE id = :id"
+        ),
         {"id": experiment_id},
     )
     await db.commit()

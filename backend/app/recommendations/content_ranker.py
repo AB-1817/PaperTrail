@@ -60,7 +60,9 @@ async def content_based_recommend(
                 "score": round(score, 4),
                 "explanation": {
                     "primary_reason": "semantic_content_similarity",
-                    "details": [f"High content similarity with target paper ({target['title'][:60]}...)"],
+                    "details": [
+                        f"High content similarity with target paper ({target['title'][:60]}...)"
+                    ],
                     "component_scores": {"semantic": round(score, 4)},
                 },
             }

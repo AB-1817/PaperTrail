@@ -57,7 +57,9 @@ async def citation_based_recommend(
                 "score": norm_score,
                 "explanation": {
                     "primary_reason": "shared_references",
-                    "details": [f"Shares {r['shared_refs']} bibliographic references with seed paper"],
+                    "details": [
+                        f"Shares {r['shared_refs']} bibliographic references with seed paper"
+                    ],
                     "component_scores": {"citation": norm_score},
                 },
             }
