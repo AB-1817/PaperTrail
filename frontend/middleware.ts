@@ -6,6 +6,7 @@ const PROTECTED_PREFIXES = [
   "/recommendations",
   "/reviews",
   "/evaluation",
+  "/rag",
 ];
 
 function isProtected(pathname: string): boolean {

@@ -195,7 +195,13 @@ async def fetch_and_store_by_id(db: AsyncSession, paper_id: str) -> dict[str, An
 
     if normalized_paper is None:
         results = await OpenAlexAdapter().search(value, limit=1)
-        if results:
+        if _looks_like_doi(value):
+            requested = normalize_doi(value)
+            for result in results:
+                if result.doi and normalize_doi(result.doi) == requested:
+                    normalized_paper = result
+                    break
+        elif results:
             normalized_paper = results[0]
 
     if normalized_paper is None:

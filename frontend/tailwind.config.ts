@@ -7,39 +7,39 @@ const config: Config = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        // Oura design system palette
-        canvas:    "#f7f1e8", // warm paper — default page background
-        surface:   "#ffffff", // elevated cards, inputs
-        "surface-grey": "#ececec",
-        ink:       "#1c1b1a", // primary heading & body text
-        stone:     "#4a4741", // brand neutral — wordmark, secondary buttons, nav
-        ash:       "#838280", // muted meta text
-        mute:      "#a8a5a0", // quietest captions
-        hairline:  "#e1dcd3", // 1px dividers on canvas
-        silver:    "#cccac7",
+        // Semantic tokens — driven by CSS variables so dark mode is automatic
+        canvas:    "var(--color-canvas)",
+        surface:   "var(--color-surface)",
+        ink:       "var(--color-ink)",
+        stone:     "var(--color-stone)",
+        ash:       "var(--color-ash)",
+        mute:      "var(--color-mute)",
+        hairline:  "var(--color-hairline)",
+        primary:   "var(--color-primary)",
+        // Static tokens (not theme-switched)
+        "on-primary":    "#ffffff",
+        "surface-grey":  "#ececec",
+        "silver":        "#cccac7",
         "ink-band":      "#000000",
-        "ink-band-soft": "#19191c", // footer surface
-        // Action
-        primary:   "#2a72de", // single conversion blue — CTA only
-        "on-primary": "#ffffff",
-        // Earth accents (bands/data-viz only — never buttons)
-        gold:      "#af751b",
-        ochre:     "#bc924c",
-        "gold-soft":"#ddaa61",
-        clay:      "#6b443d",
-        espresso:  "#39221e",
-        forest:    "#224228",
-        olive:     "#5c6f5d",
-        sage:      "#849671",
-        "sage-pale":"#ced4b8",
-        // Semantic
-        error:     "#e33a22",
+        "ink-band-soft": "#19191c",
+        // Earth accents
+        gold:       "#af751b",
+        ochre:      "#bc924c",
+        "gold-soft": "#ddaa61",
+        clay:       "#6b443d",
+        espresso:   "#39221e",
+        forest:     "#224228",
+        olive:      "#5c6f5d",
+        sage:       "#849671",
+        "sage-pale": "#ced4b8",
+        error:      "#e33a22",
       },
       fontFamily: {
-        serif: ["var(--font-fraunces)", "Fraunces", "Georgia", "serif"],
+        serif: ["var(--font-inter)", "'Fraunces'", "Georgia", "serif"],
         sans:  ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
       },
       borderRadius: {

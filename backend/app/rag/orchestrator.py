@@ -44,10 +44,39 @@ async def rag_query(
     chunks = [dict(r) for r in rows.mappings()]
 
     if not chunks:
+        # Fall back to paper abstract/metadata if no PDF chunks are indexed
+        abstract_sql = "SELECT id, title, abstract FROM papers"
+        abstract_params: dict[str, Any] = {}
+        if paper_ids:
+            abstract_sql += " WHERE id = ANY(:pids)"
+            abstract_params["pids"] = [str(pid) for pid in paper_ids]
+        abstract_sql += " LIMIT 10"
+        abstract_rows = await db.execute(text(abstract_sql), abstract_params)
+        abstracts = [dict(r) for r in abstract_rows.mappings()]
+
+        if not abstracts:
+            return {
+                "answer": "No papers found for the selected scope.",
+                "citations": [],
+                "grounding_status": "insufficient_evidence",
+                "grounded_claim_fraction": 0.0,
+            }
+
+        # Synthesise from abstracts directly
+        context_str = "\n\n".join(
+            f"[CITATION:{a['id']}] Title: {a['title']}\nAbstract: {a['abstract'] or 'Not available.'}"
+            for a in abstracts
+        )
+        provider = get_llm_provider()
+        messages = [
+            Message(role="system", content=SYSTEM_PROMPT),
+            Message(role="user", content=f"Evidence Context (abstracts only — full PDF not yet indexed):\n{context_str}\n\nQuestion: {question}"),
+        ]
+        llm_resp = await provider.complete(messages, temperature=0.0)
         return {
-            "answer": "No indexed research documents found for the selected scope. Please ingest paper PDFs first.",
+            "answer": llm_resp.content,
             "citations": [],
-            "grounding_status": "insufficient_evidence",
+            "grounding_status": "insufficient",
             "grounded_claim_fraction": 0.0,
         }
 

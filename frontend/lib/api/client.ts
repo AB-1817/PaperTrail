@@ -134,3 +134,38 @@ export async function getIngestionJob(
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+// ── Retrieval-Augmented Generation ──────────────────────────────────────────
+
+export interface RAGCitation {
+  chunk_id: string;
+  claim_text: string;
+  passage: string;
+  page_number: number | null;
+  structural_valid: boolean;
+  semantic_valid: boolean;
+  semantic_score: number;
+  is_grounded: boolean;
+}
+
+export interface RAGResult {
+  answer: string;
+  citations: RAGCitation[];
+  grounding_status: "grounded" | "insufficient" | "insufficient_evidence";
+  grounded_claim_fraction: number;
+}
+
+export async function queryRAG(
+  question: string,
+  token: string,
+  paperIds: string[] = []
+): Promise<ApiResponse<RAGResult>> {
+  return request<RAGResult>("/api/v1/rag/query", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      question,
+      paper_ids: paperIds.length > 0 ? paperIds : null,
+    }),
+  });
+}

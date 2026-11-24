@@ -1,8 +1,8 @@
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SearchBar } from "@/components/search/SearchBar";
+import { SearchResultCard } from "@/components/papers/SearchResultCard";
 import { searchPapers, Paper } from "@/lib/api/client";
-import Link from "next/link";
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string; page?: string; strategy?: string }>;
@@ -67,41 +67,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         {papers.length > 0 ? (
           <div className="space-y-3">
             {papers.map((paper) => (
-              <div key={paper.id} className="card-hover">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/papers/${encodeURIComponent(paper.doi || paper.id)}`}
-                      className="text-base font-medium text-ink hover:text-primary transition-colors"
-                    >
-                      {paper.title}
-                    </Link>
-                    <div className="text-xs text-ash mt-1 flex flex-wrap items-center gap-2">
-                      <span>{paper.authors?.map((a) => a.name).join(", ") || "Unknown authors"}</span>
-                      {paper.year && <span>· {paper.year}</span>}
-                      {paper.venue && <span>· {paper.venue}</span>}
-                    </div>
-                  </div>
-                  {paper.open_access && (
-                    <span className="eyebrow text-[9px] px-2.5 py-1 rounded-full border border-sage-pale bg-canvas text-olive whitespace-nowrap">
-                      Open Access
-                    </span>
-                  )}
-                </div>
-
-                {paper.abstract && (
-                  <p className="text-xs text-ash mt-3 line-clamp-3 leading-relaxed">
-                    {paper.abstract}
-                  </p>
-                )}
-
-                {paper.explanation?.matched_terms && paper.explanation.matched_terms.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-hairline flex items-center gap-2 text-[11px] text-ash">
-                    <span className="font-medium text-stone">Matched:</span>
-                    <span>{paper.explanation.matched_terms.join(", ")}</span>
-                  </div>
-                )}
-              </div>
+              <SearchResultCard key={paper.id} paper={paper} />
             ))}
           </div>
         ) : q ? (

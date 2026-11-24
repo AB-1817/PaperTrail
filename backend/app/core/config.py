@@ -42,11 +42,17 @@ class Settings(BaseSettings):
 
     # ── LLM ──────────────────────────────────────────────────────────────────
     openai_api_key: str = ""
+    openai_base_url: str = "https://api.openai.com/v1"
+    openai_model: str = "gpt-4o-mini"
     anthropic_api_key: str = ""
+    groq_api_key: str = ""
+    groq_model: str = "llama-3.1-8b-instant"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.0-flash"
     ollama_base_url: str = "http://localhost:11434"
     llm_provider: str = Field(
         default="ollama", validation_alias="PAPERTRAIL_LLM_PROVIDER"
-    )  # ollama | openai | anthropic
+    )  # ollama | openai | openai_compat | anthropic | groq | gemini
 
     # ── Embeddings ───────────────────────────────────────────────────────────
     embedding_model: str = "BAAI/bge-base-en-v1.5"
@@ -55,7 +61,7 @@ class Settings(BaseSettings):
     # hash keeps local runs and CI off the 500MB weight download.
     # Set to fastembed to encode with BAAI/bge-base-en-v1.5.
     embedding_backend: str = "hash"
-    reranker_model: str = "BAAI/bge-reranker-base"
+    reranker_model: str = "Xenova/ms-marco-MiniLM-L-6-v2"
     bm25_model: str = "Qdrant/bm25"
     bm25_k1: float = 1.2
     bm25_b: float = 0.75

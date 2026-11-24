@@ -87,9 +87,13 @@ async def list_papers(
 
 
 async def get_paper_by_doi(db: AsyncSession, doi: str) -> dict[str, Any] | None:
+    from app.ingestion.normalizer import normalize_doi
+    normalized = normalize_doi(doi)
+    if not normalized:
+        return None
     paper_row = await db.execute(
-        text("SELECT * FROM papers WHERE doi = :doi"),
-        {"doi": doi},
+        text("SELECT * FROM papers WHERE lower(trim(doi)) = :doi"),
+        {"doi": normalized},
     )
     p = paper_row.mappings().first()
     if not p:

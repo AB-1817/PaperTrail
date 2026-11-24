@@ -25,7 +25,10 @@ export function SearchBar({
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
-      <div className="relative flex items-center rounded-md overflow-hidden border border-hairline bg-surface shadow-card focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+      <div
+        className="relative flex items-center rounded-md overflow-hidden border border-hairline bg-surface shadow-card focus-within:ring-2 transition-all"
+        style={{ outlineColor: "var(--color-primary)" }}
+      >
         <input
           type="text"
           value={query}

@@ -70,7 +70,10 @@ class OpenAlexAdapter:
         try:
             raw_text = await self.http.get_text(url, params=params)
             item = json.loads(raw_text)
-            return self._parse_work(item)
+            paper = self._parse_work(item)
+            if paper.doi and normalize_doi(paper.doi) == normalized:
+                return paper
+            return None
         except Exception as exc:
             logger.warning("openalex_doi_lookup_failed", doi=normalized, error=str(exc))
             return None

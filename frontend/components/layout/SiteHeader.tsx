@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function SiteHeader() {
   const [user, setUser] = useState<any>(null);
@@ -31,7 +32,7 @@ export function SiteHeader() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-canvas/90 backdrop-blur border-b border-hairline">
+    <header className="sticky top-0 z-50 w-full backdrop-blur border-b" style={{ backgroundColor: "color-mix(in srgb, var(--color-canvas) 90%, transparent)", borderColor: "var(--color-hairline)" }}>
       <div className="max-w-6xl mx-auto flex h-14 items-center justify-between px-6">
         {/* Wordmark + Nav */}
         <div className="flex items-center gap-8">
@@ -63,8 +64,9 @@ export function SiteHeader() {
           </nav>
         </div>
 
-        {/* Auth Controls */}
+        {/* Auth Controls + Theme Toggle */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           {user ? (
             <Link
               href="/workspace"

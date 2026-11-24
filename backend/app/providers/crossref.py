@@ -71,7 +71,10 @@ class CrossrefAdapter:
             raw_text = await self.http.get_text(url, params=params)
             data = json.loads(raw_text)
             item = data.get("message") or {}
-            return self._parse_item(item)
+            paper = self._parse_item(item)
+            if paper and paper.doi and normalize_doi(paper.doi) == normalized:
+                return paper
+            return None
         except Exception as exc:
             logger.warning("crossref_doi_lookup_failed", doi=normalized, error=str(exc))
             return None

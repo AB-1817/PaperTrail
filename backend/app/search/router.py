@@ -5,7 +5,6 @@ from typing import Any
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_db
@@ -36,59 +35,6 @@ class SearchRequest(BaseModel):
     per_page: int = Field(default=20, ge=1, le=100)
 
 
-async def _load_db_papers(db: AsyncSession) -> list[PaperDoc]:
-    """Fetch the most-recent 500 papers from Postgres for local ranking."""
-    rows = await db.execute(
-        text(
-            """
-            SELECT p.id, p.title, p.abstract, p.year, p.venue, p.open_access, p.doi
-            FROM papers p
-            ORDER BY p.created_at DESC
-            LIMIT 500
-            """
-        )
-    )
-    paper_rows = list(rows.mappings())
-    if not paper_rows:
-        return []
-
-    docs: list[PaperDoc] = []
-    for r in paper_rows:
-        pid = str(r["id"])
-        author_rows = await db.execute(
-            text(
-                """
-                SELECT a.name FROM paper_authors pa
-                JOIN authors a ON a.id = pa.author_id
-                WHERE pa.paper_id = :pid ORDER BY pa.position
-                """
-            ),
-            {"pid": pid},
-        )
-        authors = [a["name"] for a in author_rows.mappings()]
-
-        topic_rows = await db.execute(
-            text("SELECT topic FROM paper_topics WHERE paper_id = :pid"),
-            {"pid": pid},
-        )
-        topics = [t["topic"] for t in topic_rows.mappings()]
-
-        docs.append(
-            PaperDoc(
-                id=pid,
-                title=r["title"],
-                abstract=r["abstract"] or "",
-                year=r["year"],
-                venue=r["venue"],
-                open_access=r["open_access"],
-                doi=r["doi"],
-                authors=authors,
-                topics=topics,
-            )
-        )
-    return docs
-
-
 @router.post("")
 async def search_papers_post(
     body: SearchRequest,
@@ -108,41 +54,30 @@ async def search_papers_post(
         doi=parsed_query.fields.get("doi"),
     )
 
-    # ── 1. Query local DB ────────────────────────────────────────────────────
+    # Always live-fetch from OpenAlex + arXiv for the actual query.
+    # Results are persisted to DB so repeat searches are fast.
     paper_docs: list[PaperDoc] = []
-    db_error: str | None = None
-    try:
-        paper_docs = await _load_db_papers(db)
-    except Exception as exc:
-        db_error = str(exc)
-        logger.warning("search_db_load_failed", error=db_error)
-
-    # ── 2. Live-fetch from OpenAlex + arXiv if DB is empty ───────────────────
-    #      Store results so next search hits local DB instantly.
     live_sourced = False
-    if not paper_docs:
-        logger.info("search_db_empty_live_fetching", query=body.q)
-        try:
-            live_rows = await live_search_and_store(db, body.q, limit=body.per_page)
-            live_sourced = True
-            for row in live_rows:
-                paper_docs.append(
-                    PaperDoc(
-                        id=row["id"],
-                        title=row["title"],
-                        abstract=row.get("abstract") or "",
-                        year=row.get("year"),
-                        venue=row.get("venue"),
-                        open_access=row.get("open_access", False),
-                        doi=row.get("doi"),
-                        authors=[a["name"] for a in row.get("authors", [])],
-                        topics=row.get("topics", []),
-                    )
+    try:
+        live_rows = await live_search_and_store(db, body.q, limit=body.per_page)
+        live_sourced = True
+        for row in live_rows:
+            paper_docs.append(
+                PaperDoc(
+                    id=row["id"],
+                    title=row["title"],
+                    abstract=row.get("abstract") or "",
+                    year=row.get("year"),
+                    venue=row.get("venue"),
+                    open_access=row.get("open_access", False),
+                    doi=row.get("doi"),
+                    authors=[a["name"] for a in row.get("authors", [])],
+                    topics=row.get("topics", []),
                 )
-        except Exception as exc:
-            logger.error("live_search_failed", query=body.q, error=str(exc))
+            )
+    except Exception as exc:
+        logger.error("live_search_failed", query=body.q, error=str(exc))
 
-    # ── 3. Rank and paginate ─────────────────────────────────────────────────
     ranked = rank_papers(
         strategy=body.strategy,
         query=parsed_query.text,

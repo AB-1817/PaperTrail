@@ -10,31 +10,46 @@
     --color-stone:    #4a4741;
     --color-primary:  #2a72de;
     --color-hairline: #e1dcd3;
+    --color-ash:      #838280;
+    --color-mute:     #a8a5a0;
+  }
+
+  .dark {
+    --color-canvas:   #18171a;
+    --color-surface:  #232228;
+    --color-ink:      #f0ece4;
+    --color-stone:    #c4bdb2;
+    --color-primary:  #5b9cf6;
+    --color-hairline: #2e2c32;
+    --color-ash:      #7a7880;
+    --color-mute:     #55535a;
   }
 
   * {
-    border-color: #e1dcd3;
+    border-color: var(--color-hairline);
   }
 
   html {
-    background-color: #f7f1e8;
+    background-color: var(--color-canvas);
   }
 
   body {
-    @apply bg-canvas text-ink antialiased;
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
     font-family: var(--font-inter), Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Serif display headings via Fraunces */
   h1 {
-    font-family: var(--font-fraunces), Fraunces, Georgia, serif;
+    font-family: 'Fraunces', Georgia, serif;
     font-weight: 300;
     letter-spacing: 0;
     line-height: 1.1;
   }
 
   h2 {
-    font-family: var(--font-fraunces), Fraunces, Georgia, serif;
+    font-family: 'Fraunces', Georgia, serif;
     font-weight: 300;
     line-height: 1.15;
     letter-spacing: 0;
@@ -48,55 +63,68 @@
 }
 
 @layer components {
-  /* ── Oura-style pill button — primary CTA (action blue only) ── */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2
-           rounded-full bg-primary text-on-primary
+           rounded-full bg-primary text-white
            px-5 py-2.5 text-sm font-semibold
            transition-all duration-150
            hover:opacity-90 active:opacity-80
            disabled:opacity-40 disabled:cursor-not-allowed;
   }
 
-  /* ── Secondary pill — warm stone neutral ── */
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2
-           rounded-full bg-stone text-white
+           rounded-full text-white
            px-5 py-2.5 text-sm font-semibold
            transition-all duration-150
            hover:opacity-90 active:opacity-80
            disabled:opacity-40;
+    background-color: var(--color-stone);
   }
 
-  /* ── Outline pill on canvas ── */
   .btn-outline {
     @apply inline-flex items-center justify-center gap-2
-           rounded-full border border-stone text-stone bg-canvas
+           rounded-full border
            px-5 py-2.5 text-sm font-semibold
            transition-all duration-150
-           hover:bg-hairline active:opacity-80;
+           hover:opacity-80 active:opacity-70;
+    border-color: var(--color-stone);
+    color: var(--color-stone);
+    background-color: var(--color-canvas);
   }
 
-  /* ── Oura-style feature card ── */
   .card {
-    @apply bg-surface border border-hairline rounded-lg p-6
-           transition-all duration-150;
+    @apply rounded-lg p-6 transition-all duration-150;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-hairline);
+    color: var(--color-ink);
   }
 
   .card-hover {
-    @apply card hover:shadow-card hover:border-[#c4bdb2];
+    @apply card;
+  }
+  .card-hover:hover {
+    box-shadow: 0 1px 4px 0 rgba(28,27,26,0.08), 0 0 0 1px var(--color-hairline);
+    border-color: var(--color-stone);
+    opacity: 0.95;
   }
 
-  /* ── Eyebrow label (uppercase tracked) ── */
   .eyebrow {
-    @apply text-xs font-bold uppercase tracking-[0.08em] text-ink;
+    @apply text-xs font-bold uppercase tracking-[0.08em];
+    color: var(--color-ink);
   }
 
-  /* ── Form input (stone fill per Oura) ── */
   .input-field {
-    @apply w-full rounded-md bg-white border border-hairline
-           px-4 py-2.5 text-sm text-ink placeholder-ash
-           focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary
+    @apply w-full rounded-md
+           px-4 py-2.5 text-sm
+           focus:outline-none focus:ring-2
            transition-all duration-150;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-hairline);
+    color: var(--color-ink);
+  }
+
+  .input-field::placeholder {
+    color: var(--color-ash);
   }
 }

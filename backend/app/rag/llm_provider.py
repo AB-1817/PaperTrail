@@ -212,6 +212,51 @@ class MockProvider:
         )
 
 
+class OpenAICompatProvider:
+    """Generic OpenAI-compatible provider (Groq, Gemini, OmniRoute, etc.)"""
+
+    def __init__(self, api_key: str, base_url: str, model: str) -> None:
+        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+        self.model_id = model
+        self.provider_name = "openai_compat"
+
+    async def complete(
+        self,
+        messages: list[Message],
+        max_tokens: int = 2000,
+        temperature: float = 0.0,
+    ) -> LLMResponse:
+        try:
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    json={
+                        "model": self.model_id,
+                        "messages": [{"role": m.role, "content": m.content} for m in messages],
+                        "max_tokens": max_tokens,
+                        "temperature": temperature,
+                    },
+                )
+                response.raise_for_status()
+                data = response.json()
+        except Exception as exc:
+            raise AppError(
+                status_code=503, code="LLM_NOT_CONFIGURED", message=f"{self.provider_name} error: {exc}"
+            ) from exc
+
+        choice = data["choices"][0]
+        usage = data.get("usage") or {}
+        return LLMResponse(
+            content=choice["message"]["content"],
+            model_id=self.model_id,
+            input_tokens=usage.get("prompt_tokens", 0),
+            output_tokens=usage.get("completion_tokens", 0),
+            finish_reason=choice.get("finish_reason", "stop"),
+        )
+
+
 def get_llm_provider() -> LLMProvider:
     settings = get_settings()
     provider = settings.llm_provider.lower()
@@ -224,16 +269,34 @@ def get_llm_provider() -> LLMProvider:
         return OllamaProvider(base_url=settings.ollama_base_url)
     if provider == "openai":
         if not settings.openai_api_key:
-            raise AppError(
-                status_code=503, code="LLM_NOT_CONFIGURED", message="LLM provider not configured"
-            )
+            raise AppError(status_code=503, code="LLM_NOT_CONFIGURED", message="LLM provider not configured")
         return OpenAIProvider(api_key=settings.openai_api_key)
     if provider == "anthropic":
         if not settings.anthropic_api_key:
-            raise AppError(
-                status_code=503, code="LLM_NOT_CONFIGURED", message="LLM provider not configured"
-            )
+            raise AppError(status_code=503, code="LLM_NOT_CONFIGURED", message="LLM provider not configured")
         return AnthropicProvider(api_key=settings.anthropic_api_key)
+    if provider == "groq":
+        if not settings.groq_api_key:
+            raise AppError(status_code=503, code="LLM_NOT_CONFIGURED", message="GROQ_API_KEY not set")
+        return OpenAICompatProvider(
+            api_key=settings.groq_api_key,
+            base_url="https://api.groq.com/openai/v1",
+            model=settings.groq_model,
+        )
+    if provider == "gemini":
+        if not settings.gemini_api_key:
+            raise AppError(status_code=503, code="LLM_NOT_CONFIGURED", message="GEMINI_API_KEY not set")
+        return OpenAICompatProvider(
+            api_key=settings.gemini_api_key,
+            base_url="https://generativelanguage.googleapis.com/v1beta/openai",
+            model=settings.gemini_model,
+        )
+    if provider == "openai_compat":
+        return OpenAICompatProvider(
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
+            model=settings.openai_model,
+        )
 
     if settings.environment == "test":
         return MockProvider()

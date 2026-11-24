@@ -55,7 +55,17 @@ async def _resolve_live_paper(paper_id: str) -> PaperResponse | None:
 
     if normalized_paper is None:
         results = await OpenAlexAdapter().search(value, limit=1)
-        if results:
+        if _looks_like_doi(value):
+            requested = normalize_doi(value)
+            normalized_paper = next(
+                (
+                    result
+                    for result in results
+                    if result.doi and normalize_doi(result.doi) == requested
+                ),
+                None,
+            )
+        elif results:
             normalized_paper = results[0]
 
     if normalized_paper is None:

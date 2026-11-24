@@ -4,10 +4,18 @@ import math
 import re
 
 _TOKEN = re.compile(r"[a-z0-9]+")
+_STOPWORDS = frozenset(
+    "a an the and or not in on at to of for with by from is are was were be been"
+    " has have had do does did will would could should may might shall can its it"
+    " this that these those i we you he she they us them our your his her their"
+    " as if so but yet nor up out about into over after before between through"
+    " than then when where who which what how all any each both few more most"
+    " other such no only same also just than too very s t".split()
+)
 
 
 def tokenize(text: str) -> list[str]:
-    return _TOKEN.findall(text.lower())
+    return [t for t in _TOKEN.findall(text.lower()) if t not in _STOPWORDS and len(t) > 1]
 
 
 def bm25_rank(
